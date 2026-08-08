@@ -21,15 +21,18 @@
 | 동시 제어 장비 수 | 46대 |
 | 전수 점검 소요 시간 | 11초 (순차 실행 대비 약 40배) |
 | 커널 리비전 A/B 그룹 | 5개 (그룹당 9~10대) |
-| 공개 스크립트 | 11개 |
+| 공개 스크립트 | 15개 |
 
 ---
 
 ## 구성
 
+각 폴더에는 **해당 스크립트들의 설계 의도와 판단 근거를 설명하는 `README.md`** 가 함께 있습니다.
+
 ```
 scripts/
 ├── 01-device-farm/          장비 팜 병렬 제어 + 커널 로그 분석
+│   ├── README.md                    ← 병렬화 설계, telnet 함정, 타임스탬프 필터링
 │   ├── deploy_kernel.sh             커널 이미지 FTP 일괄 플래싱
 │   ├── reboot_devices.sh            46대 동시 재부팅
 │   ├── check_kernel_version.sh      탑재 커널 빌드 번호 전수 검증
@@ -37,16 +40,26 @@ scripts/
 │   ├── collect_dmesg.exp            dmesg 전량 수집 (expect)
 │   └── analyze_link_events.sh       부팅 이후 링크 플랩 자동 탐지
 ├── 02-stress-test/
+│   ├── README.md                    ← 부하 인가 방식 선택 근거, 자기 종료형 명령
 │   └── run_remote_stress.py         CPU/MEM/NET 원격 부하 인가 오케스트레이터
 ├── 03-performance/
+│   ├── README.md                    ← sync 포함 측정, 집합 차분 클린업, OCR 검증
 │   ├── measure_extract_overhead.py  압축 해제 오버헤드 벤치마크
 │   └── measure_latency_ocr.py       Glass-to-Glass 지연 OCR 측정
 ├── 04-device-ops/
+│   ├── README.md                    ← busybox 환경 차이 대응 사례
 │   ├── collect_system_info.py       원격 시스템 정보 일괄 수집
 │   └── stop_services.sh             애플리케이션 데몬 안전 종료
-└── 05-test-harness/
-    ├── regression_test.sh           C 유틸리티 회귀 테스트 (CI 연동)
-    └── sample_random_files.sh       무작위 테스트 입력 세트 생성
+├── 05-test-harness/
+│   ├── README.md                    ← 엣지 케이스 설계, CI 연동
+│   ├── regression_test.sh           C 유틸리티 회귀 테스트
+│   └── sample_random_files.sh       무작위 테스트 입력 세트 생성
+└── 06-static-analysis/      정적분석 · 보안 취약점 대응
+    ├── README.md                    ← 정책 기반 검사, 리비전 시점 추적, 시맨틱 패치
+    ├── scan_banned_functions.py     금지 함수 검사 → SonarQube 리포트
+    ├── convert_cppcheck_to_sonar.py cppcheck XML → SonarQube JSON 변환
+    ├── scan_at_revision.sh          특정 날짜 시점으로 되돌려 스캔 후 원복
+    └── safe_string.cocci            위험 함수 → 경계검사 래퍼 일괄 치환
 
 samples/     실제 실행 출력 예시
 assets/img/  구조도 · 다이어그램 (SVG)
@@ -112,6 +125,32 @@ timestamp=$(echo "$line" | grep -oP '\[\s*\K[0-9]+(?=\.)')
 즉 **"verbose 를 끄면 빨라진다"는 일반화는 틀렸고**, 다수의 작은 아카이브를 순차 해제하는
 기동 경로에서만 유효한 최적화입니다. 측정하지 않았다면 잘못된 결론을 내렸을 지점입니다.
 
+### 4. 취약점 유입 시점 추적
+
+"이 취약점이 언제 들어왔는가" 를 알기 위해, 날짜를 인자로 받아
+`그 날짜 이전의 최신 리비전 탐색 → 체크아웃 → 전체 정적분석 → 원복` 을 자동화했습니다.
+
+```bash
+hg log -r "max(ancestors(tip) and date('< $NEXT_DAY'))" --template "{rev}\n"
+#          ancestors(tip)  현재 브랜치의 조상으로 한정 (다른 헤드 배제)
+#          date('< X')     X 이전에 커밋된 것
+#          max(...)        그중 가장 최신
+```
+
+날짜를 바꿔 가며 돌리면 이슈 건수의 변화 지점이 드러납니다.
+작업 트리를 과거로 되돌리므로, `trap ... EXIT INT TERM` 으로
+**정상 종료 · 실패 · Ctrl-C 어느 경로로 나가든** tip 복구를 보장합니다.
+
+함께 레거시 코드베이스의 위험 함수를 Coccinelle 시맨틱 패치로 일괄 치환했습니다.
+텍스트 치환과 달리 C 파서 위에서 동작하므로, 치환 결과에
+**원래 인자에서 파생된 경계 정보를 자동 생성**해 넣을 수 있습니다.
+
+```c
+strcpy(dst, src)
+  → safe_strcpy(NULL, NULL, sizeof(dst), strlen(src), dst, src)
+                             ~~~~~~~~~~~~~~~~~~~~~~~~ 자동 생성
+```
+
 ---
 
 ## 실행
@@ -145,6 +184,8 @@ cd scripts/02-stress-test
 | `02-stress-test`, `04-device-ops` | `python3` (표준 라이브러리만) |
 | `03-performance/measure_extract_overhead.py` | `python3` (표준 라이브러리만) |
 | `03-performance/measure_latency_ocr.py` | `python3`, `opencv-python`, `pytesseract`, `pandas`, `tesseract-ocr` |
+| `05-test-harness/*` | `bash`, `coreutils`(shuf -z), `tar`, `zip` |
+| `06-static-analysis/*` | `python3`, `cppcheck`, `sonar-scanner`, `hg`, `spatch`(Coccinelle) |
 
 ---
 
