@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 400" role="img" aria-label="순차 실행과 병렬 실행 비교">
+  <style>
+    :root { color-scheme: light dark; }
+    .txt   { fill: #1f2328; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono  { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .axis  { stroke: #afb8c1; stroke-width: 1; }
+    .barS  { fill: #ffaba8; }
+    .barP  { fill: #6fdd8b; }
+    .brace { stroke: #656d76; stroke-width: 1.4; fill: none; }
+    .bad   { fill: #cf222e; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .good  { fill: #1a7f37; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .dash  { stroke: #8c959f; stroke-width: 1.2; stroke-dasharray: 4 4; }
+
+    @media (prefers-color-scheme: dark) {
+      .txt   { fill: #e6edf3; }
+      .mono  { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .axis  { stroke: #4a5058; }
+      .barS  { fill: #c93c37; }
+      .barP  { fill: #2ea043; }
+      .brace { stroke: #9198a1; }
+      .bad   { fill: #ff7b72; }
+      .good  { fill: #3fb950; }
+      .dash  { stroke: #6a737d; }
+    }
+  </style>
+
+  <!-- Title -->
+  <text class="txt" x="24" y="28" font-size="15" font-weight="600">46대 장비 uptime 수집 — 실행 모델 비교</text>
+
+  <!-- ================= Sequential ================= -->
+  <text class="bad" x="24" y="62" font-size="13" font-weight="600">순차 실행 (naive)</text>
+  <text class="mono" x="24" y="80" font-size="11">for ip in ...; do check_uptime $ip; done</text>
+
+  <line class="axis" x1="24" y1="96" x2="24" y2="176"/>
+
+  <!-- sequential bars: staircase -->
+  <rect class="barS" x="26"  y="100" width="42" height="9" rx="2"/>
+  <rect class="barS" x="70"  y="112" width="42" height="9" rx="2"/>
+  <rect class="barS" x="114" y="124" width="42" height="9" rx="2"/>
+  <rect class="barS" x="158" y="136" width="42" height="9" rx="2"/>
+  <rect class="barS" x="202" y="148" width="42" height="9" rx="2"/>
+  <text class="muted" x="252" y="157" font-size="11">… 41 more …</text>
+  <rect class="barS" x="700" y="160" width="42" height="9" rx="2"/>
+
+  <line class="dash" x1="742" y1="96" x2="742" y2="196"/>
+  <text class="bad" x="750" y="140" font-size="13" font-weight="600">≈ 6–8분</text>
+  <text class="muted" x="750" y="158" font-size="11">46 × telnet 왕복</text>
+
+  <!-- ================= Parallel ================= -->
+  <text class="good" x="24" y="238" font-size="13" font-weight="600">병렬 실행 (본 스크립트)</text>
+  <text class="mono" x="24" y="256" font-size="11">for ip in ...; do check_uptime $ip &amp; done; wait</text>
+
+  <line class="axis" x1="24" y1="272" x2="24" y2="352"/>
+
+  <!-- parallel bars: all start at once, slight jitter -->
+  <rect class="barP" x="26" y="276" width="44" height="8" rx="2"/>
+  <rect class="barP" x="26" y="287" width="52" height="8" rx="2"/>
+  <rect class="barP" x="26" y="298" width="40" height="8" rx="2"/>
+  <rect class="barP" x="26" y="309" width="58" height="8" rx="2"/>
+  <rect class="barP" x="26" y="320" width="47" height="8" rx="2"/>
+  <rect class="barP" x="26" y="331" width="62" height="8" rx="2"/>
+  <rect class="barP" x="26" y="342" width="44" height="8" rx="2"/>
+  <text class="muted" x="96" y="316" font-size="11">46 workers 동시 기동</text>
+
+  <line class="dash" x1="88" y1="272" x2="88" y2="372"/>
+  <text class="good" x="98" y="364" font-size="13" font-weight="600">≈ 11초</text>
+
+  <!-- brace showing bound -->
+  <path class="brace" d="M26 360 L26 366 L88 366 L88 360"/>
+  <text class="muted" x="150" y="364" font-size="11">실행시간 = 가장 느린 장비 1대 (46대 합이 아님)</text>
+
+  <!-- key point -->
+  <text class="muted" x="24" y="392" font-size="11">핵심: 공유 결과 파일에 고정폭 포맷으로 append → wait 로 수렴 → sort 로 그룹 정렬. 워커 간 락이 필요 없다.</text>
+</svg>

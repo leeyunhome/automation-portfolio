@@ -1,0 +1,32 @@
+$ DEVICE_USER=root DEVICE_PASS=**** ./check_uptime_parallel.sh
+
+====== 전체 업타임 확인 결과 ======
+그룹        IP                    업타임
+------------------------------------------------------------
+[baseline]  192.168.10.47         14:22:31 up 6 days, 2:14, load average: 0.31, 0.28, 0.25
+[baseline]  192.168.10.48         14:22:31 up 6 days, 2:14, load average: 0.29, 0.30, 0.27
+[baseline]  192.168.10.49         14:22:31 up 1 day, 4:02,  load average: 0.44, 0.39, 0.35   <-- 재부팅 발생
+[baseline]  192.168.10.50         14:22:31 up 6 days, 2:13, load average: 0.26, 0.24, 0.22
+[baseline]  192.168.10.51         14:22:32 up 6 days, 2:13, load average: 0.33, 0.31, 0.29
+[baseline]  192.168.10.52         접속 실패 / 무응답                                          <-- 장비 다운
+[baseline]  192.168.10.53         14:22:32 up 6 days, 2:13, load average: 0.28, 0.27, 0.26
+[baseline]  192.168.10.54         14:22:32 up 6 days, 2:12, load average: 0.30, 0.29, 0.28
+[baseline]  192.168.10.55         14:22:32 up 6 days, 2:12, load average: 0.35, 0.33, 0.30
+[baseline]  192.168.10.56         14:22:32 up 6 days, 2:12, load average: 0.27, 0.26, 0.25
+[rev-A]     192.168.10.11         14:22:30 up 6 days, 2:15, load average: 0.32, 0.30, 0.28
+[rev-A]     192.168.10.12         14:22:30 up 6 days, 2:15, load average: 0.29, 0.28, 0.27
+[rev-A]     192.168.10.13         14:22:30 up 6 days, 2:15, load average: 0.31, 0.29, 0.28
+[rev-A]     192.168.10.14         14:22:30 up 6 days, 2:15, load average: 0.34, 0.32, 0.30
+[rev-A]     192.168.10.15         14:22:30 up 6 days, 2:14, load average: 0.28, 0.27, 0.26
+[rev-A]     192.168.10.16         14:22:30 up 6 days, 2:14, load average: 0.30, 0.29, 0.27
+[rev-A]     192.168.10.17         14:22:30 up 6 days, 2:14, load average: 0.33, 0.31, 0.29
+[rev-A]     192.168.10.18         14:22:31 up 6 days, 2:14, load average: 0.27, 0.26, 0.25
+[rev-A]     192.168.10.19         14:22:31 up 6 days, 2:14, load average: 0.29, 0.28, 0.26
+[rev-B]     192.168.10.20         14:22:31 up 6 days, 2:14, load average: 0.31, 0.30, 0.28
+[rev-B]     192.168.10.21         14:22:31 up 2 days, 8:41,  load average: 0.38, 0.36, 0.33   <-- 재부팅 발생
+[rev-B]     192.168.10.22         14:22:31 up 6 days, 2:13, load average: 0.30, 0.28, 0.27
+...
+[rev-D]     192.168.10.46         14:22:33 up 6 days, 2:11, load average: 0.32, 0.30, 0.29
+============================ 완료 ============================
+
+real    0m11.482s      <-- 46대 전체. 순차 실행이었다면 약 6~8분

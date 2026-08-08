@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 470" role="img" aria-label="OCR 기반 지연 측정 ROI 구성">
+  <style>
+    :root { color-scheme: light dark; }
+    .txt   { fill: #1f2328; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono  { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .screen{ fill: #f6f8fa; stroke: #afb8c1; stroke-width: 2; }
+    .quad  { fill: #ffffff; stroke: #d0d7de; stroke-width: 1; }
+    .roi   { fill: none; stroke: #1a7f37; stroke-width: 2.5; }
+    .roitx { fill: #1a7f37; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .digit { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; }
+    .card  { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+    .arrow { stroke: #bf3989; stroke-width: 1.8; fill: none; }
+    .arrtx { fill: #bf3989; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .empty { fill: #eaeef2; stroke: #d0d7de; stroke-width: 1; stroke-dasharray: 5 4; }
+
+    @media (prefers-color-scheme: dark) {
+      .txt   { fill: #e6edf3; }
+      .mono  { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .screen{ fill: #0d1117; stroke: #4a5058; }
+      .quad  { fill: #151b23; stroke: #3d444d; }
+      .roi   { stroke: #3fb950; }
+      .roitx { fill: #3fb950; }
+      .digit { fill: #e6edf3; }
+      .card  { fill: #151b23; stroke: #3d444d; }
+      .arrow { stroke: #d2a8ff; }
+      .arrtx { fill: #d2a8ff; }
+      .empty { fill: #1c2128; stroke: #3d444d; }
+    }
+  </style>
+
+  <text class="txt" x="24" y="28" font-size="15" font-weight="600">Glass-to-Glass 지연 측정 — 한 장의 스크린샷에서 세 시각을 동시 추출</text>
+  <text class="muted" x="24" y="48" font-size="12">밀리초 스톱워치를 두 장비가 동시에 촬영 → 원본과 두 장비 출력을 한 화면에 배치 → 캡처 → ROI 분할 → OCR</text>
+
+  <!-- Screen mock -->
+  <rect class="screen" x="24" y="70" width="440" height="270" rx="6"/>
+
+  <!-- Quadrants -->
+  <rect class="quad" x="30" y="76" width="214" height="129"/>
+  <rect class="quad" x="244" y="76" width="214" height="129"/>
+  <rect class="quad" x="30" y="205" width="214" height="129"/>
+  <rect class="quad" x="244" y="205" width="214" height="129"/>
+
+  <!-- Quadrant labels + digits -->
+  <text class="muted" x="137" y="98" font-size="10" text-anchor="middle">reference (기준 스톱워치)</text>
+  <text class="digit" x="137" y="150" font-size="26" text-anchor="middle">00:12:04.187</text>
+  <rect class="roi" x="36" y="82" width="202" height="117" rx="3"/>
+  <text class="roitx" x="42" y="194" font-size="9">(0.0, 0.0, 0.5, 0.5)</text>
+
+  <text class="muted" x="351" y="98" font-size="10" text-anchor="middle">device_a</text>
+  <text class="digit" x="351" y="150" font-size="26" text-anchor="middle">00:12:04.041</text>
+  <rect class="roi" x="250" y="82" width="202" height="117" rx="3"/>
+  <text class="roitx" x="256" y="194" font-size="9">(0.5, 0.0, 1.0, 0.5)</text>
+
+  <rect class="empty" x="36" y="211" width="202" height="117" rx="3"/>
+  <text class="muted" x="137" y="275" font-size="11" text-anchor="middle">(미사용)</text>
+
+  <text class="muted" x="351" y="227" font-size="10" text-anchor="middle">device_b</text>
+  <text class="digit" x="351" y="279" font-size="26" text-anchor="middle">00:12:03.902</text>
+  <rect class="roi" x="250" y="211" width="202" height="117" rx="3"/>
+  <text class="roitx" x="256" y="323" font-size="9">(0.5, 0.5, 1.0, 1.0)</text>
+
+  <text class="muted" x="244" y="358" font-size="11" text-anchor="middle">debug_roi.png — ROI 사각형과 인식 결과를 그려 저장 (영역 오설정 조기 발견)</text>
+
+  <!-- Arrow to calc -->
+  <path class="arrow" d="M470 200 L 512 200"/>
+  <polygon class="arrow" points="512,200 504,196 504,204" fill="currentColor"/>
+
+  <!-- Calculation card -->
+  <rect class="card" x="524" y="80" width="366" height="252" rx="8"/>
+  <text class="txt" x="546" y="106" font-size="12" font-weight="600">지연 산출</text>
+
+  <text class="mono" x="546" y="134" font-size="11">reference  = 00:12:04.187  →  724.187 s</text>
+  <text class="mono" x="546" y="156" font-size="11">device_a   = 00:12:04.041  →  724.041 s</text>
+  <text class="mono" x="546" y="178" font-size="11">device_b   = 00:12:03.902  →  723.902 s</text>
+
+  <line x1="546" y1="194" x2="868" y2="194" stroke="#d0d7de" stroke-width="1"/>
+
+  <text class="mono" x="546" y="218" font-size="12" font-weight="600">latency_a = 724.041 - 724.187 = -0.146 s</text>
+  <text class="mono" x="546" y="240" font-size="12" font-weight="600">latency_b = 723.902 - 724.187 = -0.285 s</text>
+
+  <text class="muted" x="546" y="268" font-size="11">→ device_a 약 146 ms, device_b 약 285 ms 지연</text>
+  <text class="muted" x="546" y="290" font-size="11">스크린샷 수백 장을 일괄 처리해 평균/최소/최대를</text>
+  <text class="muted" x="546" y="308" font-size="11">CSV 로 산출. 사람이 눈으로 읽고 빼던 작업을 제거.</text>
+
+  <!-- OCR settings -->
+  <rect class="card" x="24" y="378" width="866" height="76" rx="8"/>
+  <text class="txt" x="44" y="402" font-size="12" font-weight="600">OCR 설정과 방어 로직</text>
+  <text class="muted" x="44" y="424" font-size="11">· --psm 7 (single text line): 숫자 한 줄만 있는 영역이므로 페이지 세그멘테이션을 끄면 인식률이 오른다.</text>
+  <text class="muted" x="44" y="444" font-size="11">· ROI 를 비율(0.0~1.0)로 지정 → 해상도가 다른 캡처 세션이 섞여도 동일 설정으로 동작. 파싱 실패 시 None 반환으로 통계에서 자동 제외.</text>
+</svg>

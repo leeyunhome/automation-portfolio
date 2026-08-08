@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>임베디드 리눅스 테스트 자동화 포트폴리오</title>
+<meta name="description" content="다수 임베디드 리눅스 장비를 대상으로 한 테스트 자동화 · 성능 측정 · 로그 분석 스크립트 모음">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --bg-code: #f6f8fa;
+    --fg: #1f2328;
+    --fg-muted: #656d76;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --accent-soft: #ddf4ff;
+    --ok: #1a7f37;
+    --warn: #bf3989;
+    --danger: #cf222e;
+    --radius: 10px;
+    --maxw: 980px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --bg-soft: #151b23;
+      --bg-code: #151b23;
+      --fg: #e6edf3;
+      --fg-muted: #9198a1;
+      --border: #3d444d;
+      --accent: #58a6ff;
+      --accent-soft: #121d2f;
+      --ok: #3fb950;
+      --warn: #d2a8ff;
+      --danger: #ff7b72;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo",
+                 "Noto Sans KR", Roboto, sans-serif;
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- Header ---------- */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-soft);
+    padding: 56px 0 44px;
+  }
+  header h1 {
+    margin: 0 0 12px;
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+  header p.lead {
+    margin: 0 0 24px;
+    font-size: 1.05rem;
+    color: var(--fg-muted);
+    max-width: 70ch;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    font-size: 0.78rem;
+    padding: 4px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--fg-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- Stat row ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin: 32px 0 0;
+  }
+  .stat {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    background: var(--bg);
+  }
+  .stat .n {
+    display: block;
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .stat .l {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    margin-top: 2px;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav ul {
+    display: flex; gap: 4px; list-style: none;
+    margin: 0; padding: 0;
+    overflow-x: auto; scrollbar-width: thin;
+  }
+  nav a {
+    display: block; padding: 13px 12px;
+    color: var(--fg-muted); text-decoration: none;
+    font-size: 0.88rem; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover { color: var(--fg); border-bottom-color: var(--border); }
+
+  /* ---------- Sections ---------- */
+  section { padding: 52px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-size: 1.5rem; margin: 0 0 6px;
+    letter-spacing: -0.02em; scroll-margin-top: 60px;
+  }
+  h2 .kicker {
+    display: block;
+    font-size: 0.75rem; font-weight: 600;
+    color: var(--accent); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  h3 { font-size: 1.08rem; margin: 32px 0 8px; letter-spacing: -0.01em; }
+  h4 { font-size: 0.95rem; margin: 22px 0 6px; color: var(--fg); }
+  p { margin: 0 0 14px; max-width: 78ch; }
+  .muted { color: var(--fg-muted); }
+  .small { font-size: 0.9rem; }
+
+  /* ---------- Figure ---------- */
+  figure { margin: 26px 0; }
+  figure img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  figcaption {
+    font-size: 0.84rem; color: var(--fg-muted);
+    margin-top: 9px; text-align: center;
+  }
+
+  /* ---------- Code ---------- */
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px 17px;
+    overflow-x: auto;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    margin: 14px 0;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  p code, li code, td code {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 5px;
+    font-size: 0.87em;
+  }
+  pre code { background: none; border: none; padding: 0; }
+
+  /* ---------- Callout ---------- */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+  }
+  .callout .t {
+    font-weight: 600; font-size: 0.88rem;
+    color: var(--accent); margin-bottom: 4px;
+  }
+  .callout p { margin: 0; font-size: 0.94rem; }
+  .callout.problem { border-left-color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+  .callout.problem .t { color: var(--danger); }
+  .callout.result  { border-left-color: var(--ok); background: color-mix(in srgb, var(--ok) 9%, transparent); }
+  .callout.result .t { color: var(--ok); }
+
+  /* ---------- Script card ---------- */
+  .card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 18px 0;
+    background: var(--bg-soft);
+  }
+  .card h3 { margin-top: 0; }
+  .card .path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.82rem; color: var(--fg-muted);
+    margin-bottom: 12px; word-break: break-all;
+  }
+  .card .path a { color: var(--accent); }
+
+  /* ---------- Table ---------- */
+  .tablewrap { overflow-x: auto; margin: 18px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.89rem; min-width: 520px; }
+  th, td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--bg-soft); font-weight: 600; }
+  td.num { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .pos { color: var(--danger); font-weight: 600; }
+  .neg { color: var(--ok); font-weight: 600; }
+
+  ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 78ch; }
+  li { margin-bottom: 6px; }
+
+  footer {
+    padding: 40px 0 60px;
+    color: var(--fg-muted);
+    font-size: 0.88rem;
+    border-top: 1px solid var(--border);
+  }
+  a { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    section { padding: 40px 0; }
+    header { padding: 40px 0 32px; }
+    pre { font-size: 0.76rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>임베디드 리눅스 테스트 자동화 포트폴리오</h1>
+    <p class="lead">
+      다수의 임베디드 리눅스 장비를 대상으로 커널 배포 · 안정성 검증 · 부하 인가 ·
+      커널 로그 이상 탐지 · 성능 정량화를 무인으로 수행하기 위해 직접 작성한
+      Shell / Python 자동화 스크립트 모음입니다.
+    </p>
+    <div class="tags">
+      <span class="tag">bash</span>
+      <span class="tag">expect</span>
+      <span class="tag">python3</span>
+      <span class="tag">telnet / socket</span>
+      <span class="tag">dmesg</span>
+      <span class="tag">busybox</span>
+      <span class="tag">opencv + tesseract</span>
+      <span class="tag">CI-ready</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="n">46</span><span class="l">동시 제어 장비 수</span></div>
+      <div class="stat"><span class="n">11초</span><span class="l">전수 점검 소요 (순차 대비 ~40×)</span></div>
+      <div class="stat"><span class="n">5</span><span class="l">커널 리비전 A/B 그룹</span></div>
+      <div class="stat"><span class="n">11</span><span class="l">공개 스크립트</span></div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="wrap">
+    <ul>
+      <li><a href="#overview">개요</a></li>
+      <li><a href="#farm">1. 장비 팜 자동화</a></li>
+      <li><a href="#dmesg">2. 커널 로그 분석</a></li>
+      <li><a href="#stress">3. 부하 테스트</a></li>
+      <li><a href="#perf">4. 성능 정량화</a></li>
+      <li><a href="#ops">5. 운영 유틸</a></li>
+      <li><a href="#harness">6. 테스트 하네스</a></li>
+      <li><a href="#lessons">배운 것</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ============================================================ -->
+<section id="overview">
+  <div class="wrap">
+    <h2><span class="kicker">Overview</span>무엇을, 왜 자동화했는가</h2>
+
+    <p>
+      임베디드 장비의 펌웨어 안정성은 "한 대를 오래 켜 두고 지켜보는" 방식으로는 검증되지 않습니다.
+      간헐적 결함은 표본이 충분해야 드러나고, 커널을 바꿔 가며 비교하려면 동일 조건에서
+      여러 대를 동시에 돌려야 합니다.
+    </p>
+    <p>
+      그런데 대상 장비는 busybox 기반 최소 루트파일시스템이라
+      <code>ssh</code>도 <code>stress-ng</code>도 <code>perf</code>도 없고, 접속 수단은 telnet 뿐이었습니다.
+      가진 것만으로 검증 인프라를 만들어야 했고, 그 결과물이 이 저장소입니다.
+    </p>
+
+    <figure>
+      <img src="assets/img/test-cycle.svg" alt="커널 검증 회귀 사이클: 배포 → 재기동 → 검증 → 소킹 집계 → 로그 분석">
+      <figcaption>5개 스크립트가 하나의 회귀 사이클을 이룬다. 각 단계는 독립 실행도 가능하다.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <div class="t">이 포트폴리오의 관점</div>
+      <p>
+        스크립트 자체보다 <strong>"왜 이렇게 짰는가"</strong>에 무게를 두었습니다.
+        병렬화를 택한 이유, 노이즈를 걸러낸 기준, 측정 정확도를 위해 감수한 비용 —
+        각 스크립트 상단 주석과 아래 설명에 그 판단 근거를 남겼습니다.
+      </p>
+    </div>
+
+    <h3>익명화 안내</h3>
+    <p class="small muted">
+      실제 업무에서 작성한 스크립트를 공개용으로 다듬은 것입니다.
+      SoC 명칭 · 제품명 · 사내 네트워크 대역 · 자격증명은 모두 제거하거나 일반화했으며,
+      비밀번호와 호스트는 환경변수로 주입하도록 변경했습니다.
+      동작 로직과 설계 의도는 원본 그대로입니다.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="farm">
+  <div class="wrap">
+    <h2><span class="kicker">01 · Device Farm</span>46대 장비 팜 병렬 제어</h2>
+
+    <p>
+      커널 리비전별 장기 안정성을 비교하기 위해, IP 대역을 리비전 그룹에 배정하고
+      제어 호스트 한 대에서 전 과정을 무인 수행하도록 구성했습니다.
+      <strong>IP 대역 = 커널 리비전</strong>이라는 규칙 하나로, 스크립트가 곧 실험 설계가 됩니다.
+    </p>
+
+    <figure>
+      <img src="assets/img/farm-architecture.svg" alt="제어 호스트 한 대가 46대 장비를 5개 리비전 그룹으로 나누어 제어하는 구조도">
+      <figcaption>제어 호스트 1대 → 46대 장비. 대역별로 서로 다른 커널이 올라가 있어 동일 조건 비교가 가능하다.</figcaption>
+    </figure>
+
+    <h3>왜 병렬이어야 했는가</h3>
+    <p>
+      장비 한 대당 telnet 접속 · 로그인 · 명령 · 종료에 8~10초가 걸립니다.
+      46대를 순차로 돌면 6~8분. 그동안 첫 장비와 마지막 장비의 관측 시점이 벌어지고,
+      <strong>그 시차가 그대로 uptime 비교의 오차</strong>가 됩니다.
+    </p>
+
+    <figure>
+      <img src="assets/img/parallel-vs-sequential.svg" alt="순차 실행과 병렬 실행의 소요 시간 비교 타임라인">
+      <figcaption>워커를 모두 백그라운드로 띄우고 <code>wait</code>로 수렴 → 실행시간이 "가장 느린 1대" 수준으로 수렴한다.</figcaption>
+    </figure>
+
+    <h4>락 없이 결과를 모으는 방법</h4>
+    <p>
+      46개 워커가 동시에 결과를 쓰지만 뮤텍스가 없습니다.
+      각 워커가 <strong>한 줄짜리 고정폭 레코드</strong>를 append 하고, 수렴 후 <code>sort</code>로 정렬합니다.
+      한 줄 쓰기는 사실상 원자적이고, 순서는 어차피 정렬로 결정되므로 락이 필요 없습니다.
+    </p>
+
+<pre><code># 워커: 고정폭 포맷으로 공유 파일에 append
+printf "%-10s  %-20s  %s\n" "[$group]" "$ip" "$result" &gt;&gt; "$RESULT_FILE"
+
+# 기동: 모두 백그라운드로 던지고
+for i in {11..19}; do check_uptime "$PREFIX.$i" "rev-A" &amp; done
+for i in {20..28}; do check_uptime "$PREFIX.$i" "rev-B" &amp; done
+# ...
+
+wait                    # 배리어 — 전원 수렴 대기
+sort "$RESULT_FILE"     # 그룹별 정렬 출력</code></pre>
+
+    <h4>telnet 자동화의 두 가지 함정</h4>
+    <ul>
+      <li>
+        <strong>PTY 가 필요하다.</strong> telnet 은 TTY 가 없으면 동작이 달라집니다.
+        <code>script -q -c "expect ..."</code>로 감싸 의사 터미널을 확보했습니다.
+      </li>
+      <li>
+        <strong>CR 이 섞여 들어온다.</strong> 원격 출력은 CRLF 라 그대로 파싱하면 비교가 어긋납니다.
+        <code>tr -d '\r'</code>로 정규화한 뒤 <code>grep -E 'up +[0-9]'</code>로 목표 라인만 뽑습니다.
+      </li>
+    </ul>
+
+    <div class="card">
+      <h3>스크립트 목록</h3>
+      <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>파일</th><th>역할</th><th>포인트</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code><a href="scripts/01-device-farm/deploy_kernel.sh">deploy_kernel.sh</a></code></td>
+            <td>커널 이미지 FTP 일괄 플래싱</td>
+            <td>scp 가 없는 busybox 환경 → <code>ftpput</code> 사용, 장비별 성공/실패 즉시 판정</td>
+          </tr>
+          <tr>
+            <td><code><a href="scripts/01-device-farm/reboot_devices.sh">reboot_devices.sh</a></code></td>
+            <td>46대 동시 재부팅</td>
+            <td>세션이 끊기므로 <code>expect eof</code>로 정상 종료 처리. 동일 시점 리셋이 비교 유효성의 전제</td>
+          </tr>
+          <tr>
+            <td><code><a href="scripts/01-device-farm/check_kernel_version.sh">check_kernel_version.sh</a></code></td>
+            <td>탑재 커널 빌드 번호 전수 검증</td>
+            <td><code>#&lt;빌드번호&gt; SMP</code> 패턴 매칭. 플래싱 실패 장비가 섞이면 A/B 자체가 무의미해진다</td>
+          </tr>
+          <tr>
+            <td><code><a href="scripts/01-device-farm/check_uptime_parallel.sh">check_uptime_parallel.sh</a></code></td>
+            <td>uptime 병렬 수집 · 그룹별 집계</td>
+            <td>46 워커 + <code>wait</code> + 공유 파일 append. 6~8분 → 11초</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <h4>실행 결과</h4>
+<pre><code>====== 전체 업타임 확인 결과 ======
+그룹        IP                    업타임
+------------------------------------------------------------
+[baseline]  192.168.10.47         up 6 days,  2:14, load average: 0.31, 0.28, 0.25
+[baseline]  192.168.10.49         up 1 day,   4:02, load average: 0.44, 0.39, 0.35   &lt;-- 재부팅 발생
+[baseline]  192.168.10.52         접속 실패 / 무응답                                  &lt;-- 장비 다운
+[rev-A]     192.168.10.11         up 6 days,  2:15, load average: 0.32, 0.30, 0.28
+[rev-B]     192.168.10.21         up 2 days,  8:41, load average: 0.38, 0.36, 0.33   &lt;-- 재부팅 발생
+...
+============================ 완료 ============================
+
+real    0m11.482s      &lt;-- 46대 전체</code></pre>
+    <p class="small muted">
+      전체 출력: <a href="samples/uptime_output.txt">samples/uptime_output.txt</a>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="dmesg">
+  <div class="wrap">
+    <h2><span class="kicker">02 · Kernel Log</span>커널 로그 이상 자동 탐지</h2>
+
+    <div class="callout problem">
+      <div class="t">문제</div>
+      <p>
+        간헐적 네트워크 단절이 보고되어 이더넷 링크 플랩을 의심했습니다.
+        그런데 46대 dmesg 를 <code>grep "Link is"</code> 로 훑으니
+        <strong>정상 장비를 포함해 전부가 걸렸습니다.</strong>
+      </p>
+    </div>
+
+    <p>
+      원인은 단순했습니다. 부팅 과정에서 PHY 가 링크를 협상하며 남기는 로그가
+      모든 장비에 공통으로 존재하기 때문입니다.
+      즉 판정 기준이 <strong>"이벤트가 있느냐"가 아니라 "언제 발생했느냐"</strong>여야 했습니다.
+    </p>
+
+    <figure>
+      <img src="assets/img/boot-threshold-filter.svg" alt="커널 타임스탬프 60초를 경계로 부팅 노이즈와 운영 중 이상을 분리하는 다이어그램">
+      <figcaption>커널 링 버퍼 타임스탬프를 파싱해 부팅 구간(0–60초)을 노이즈로 배제한다.</figcaption>
+    </figure>
+
+    <h4>타임스탬프 추출</h4>
+    <p>
+      dmesg 의 <code>[   10.026633]</code> 형태에서 정수부만 뽑아 임계값과 비교합니다.
+      PCRE 의 <code>\K</code> 와 lookahead 를 쓰면 후처리 없이 한 번에 숫자만 얻을 수 있습니다.
+    </p>
+
+<pre><code>timestamp=$(echo "$line" | grep -oP '\[\s*\K[0-9]+(?=\.)')
+#                                   │      │  │       └─ 뒤에 소수점이 오는 경우만 (lookahead)
+#                                   │      │  └───────── 정수부
+#                                   │      └──────────── 여기까지는 매치 결과에서 제외
+#                                   └─────────────────── 여는 대괄호 + 공백
+
+if [ -n "$timestamp" ] &amp;&amp; [ "$timestamp" -gt "$BOOT_THRESHOLD" ]; then
+    # 부팅 이후 발생 → 이상 징후로 승격 출력
+fi</code></pre>
+
+    <h4>세 가지 결과를 구분한다</h4>
+    <ul>
+      <li><strong>OK</strong> — 부팅 이후 link 변동 없음</li>
+      <li><strong>이상 감지</strong> — 임계값 이후 이벤트 발생 (해당 로그 라인을 함께 출력)</li>
+      <li><strong>WARNING</strong> — 로그 수집 실패, 또는 link 이벤트가 <em>아예 없음</em>
+        (드라이버 미로드 등 다른 종류의 이상 신호)</li>
+    </ul>
+
+    <div class="callout result">
+      <div class="t">결과</div>
+      <p>
+        단순 grep 으로는 46대 전부가 "이벤트 있음"이었지만,
+        타임스탬프 필터링 후 <strong>실제 이상 장비 2대</strong>만 남았습니다.
+        조사 대상이 좁혀지자 원인 분석이 가능해졌습니다.
+      </p>
+    </div>
+
+<pre><code>ip : 192.168.10.14
+
+  [192.168.10.14] *** 부팅 이후 LINK 이벤트 감지됨! ***
+    [ 4213.882910] eth-mac 40800000.eth eth0: Link is Down
+    [ 4216.104552] eth-mac 40800000.eth eth0: Link is Up - 100Mbps/Full - flow control off
+    [ 8871.339284] eth-mac 40800000.eth eth0: Link is Down
+    [ 8873.551017] eth-mac 40800000.eth eth0: Link is Up - 100Mbps/Full - flow control off
+
+ip : 192.168.10.15
+  [192.168.10.15] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.17
+  [192.168.10.17] WARNING: 로그 파일을 찾을 수 없습니다 (수집 실패)</code></pre>
+    <p class="small muted">
+      전체 출력: <a href="samples/link_events_output.txt">samples/link_events_output.txt</a> ·
+      스크립트: <a href="scripts/01-device-farm/analyze_link_events.sh">analyze_link_events.sh</a>,
+      <a href="scripts/01-device-farm/collect_dmesg.exp">collect_dmesg.exp</a>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="stress">
+  <div class="wrap">
+    <h2><span class="kicker">03 · Stress Test</span>원격 부하 인가 프레임워크</h2>
+
+    <p>
+      "한가할 때는 멀쩡한데 부하가 걸리면 죽는다" 유형의 결함을 재현하기 위한 도구입니다.
+      한 대만 괴롭혀서는 재현되지 않아, 여러 대에 동시에 부하를 인가할 필요가 있었습니다.
+    </p>
+
+    <h4>있는 것만으로 부하를 만든다</h4>
+    <p>
+      대상 장비에는 <code>stress-ng</code> 같은 표준 도구가 없습니다.
+      busybox 에 이미 있는 것만 조합해 각 자원별 부하를 구성했습니다.
+    </p>
+
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>자원</th><th>인가 방식</th><th>선택 이유</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>CPU</td>
+          <td><code>dd if=/dev/urandom of=/dev/null</code></td>
+          <td><code>/dev/zero</code>가 아닌 <code>urandom</code> — 커널 PRNG 연산으로 실제 CPU 를 태운다</td>
+        </tr>
+        <tr>
+          <td>Memory</td>
+          <td><code>mount -t tmpfs -o size=50M</code> + <code>dd</code></td>
+          <td>tmpfs 는 물리 메모리를 점유한다. 파일 쓰기처럼 보이지만 실제로는 RAM 압박</td>
+        </tr>
+        <tr>
+          <td>Network</td>
+          <td><code>iperf -s -t N &amp;</code></td>
+          <td>장비에 이미 포함된 도구</td>
+        </tr>
+        <tr>
+          <td>정지</td>
+          <td><code>killall dd iperf</code></td>
+          <td>일괄 정리</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout">
+      <div class="t">설계 결정 — 자기 종료형 명령</div>
+      <p>
+        원격 부하 테스트의 최악은 <em>제어 스크립트가 죽어서 장비에 부하가 영구히 남는 것</em>입니다.
+        모든 명령을 <code>dd ... &amp; PID=$!; sleep N; kill $PID</code> 형태로 보내
+        장비가 스스로 부하를 해제하도록 했습니다.
+      </p>
+    </div>
+
+<pre><code>def build_command(load_type, duration):
+    if load_type == "cpu":
+        # urandom 읽기로 CPU 를 태운다. sleep 후 자기 자신이 kill.
+        return (f"dd if=/dev/urandom of=/dev/null &amp; "
+                f"PID=$!; sleep {duration}; kill $PID")
+
+    if load_type == "mem":
+        # tmpfs 램디스크로 실제 물리 메모리를 점유
+        return (f"mkdir -p /tmp/ram; "
+                f"mount -t tmpfs -o size=50M tmpfs /tmp/ram; "
+                f"dd if=/dev/zero of=/tmp/ram/dummy bs=1M count=50; "
+                f"sleep {duration}; umount /tmp/ram")</code></pre>
+
+    <h4>부분 실패를 허용한다</h4>
+    <p>
+      장비별로 스레드를 띄우되 <code>0.1초</code> 간격으로 스태거링해 동시 접속 폭주를 완화하고,
+      각 워커를 <code>try/except</code>로 감쌌습니다.
+      한 대가 죽어도 나머지 19대의 테스트는 계속됩니다.
+      이미 장애가 난 장비는 <code>-e</code> 옵션으로 제외할 수 있습니다.
+    </p>
+
+<pre><code># 20대에 60초간 CPU 부하
+./run_remote_stress.py root secret cpu -d 60
+
+# 210, 219 를 제외하고 메모리 부하
+./run_remote_stress.py root secret mem -d 120 -e 210 219
+
+# 전체 정지
+./run_remote_stress.py root secret stop</code></pre>
+    <p class="small muted">
+      스크립트: <a href="scripts/02-stress-test/run_remote_stress.py">run_remote_stress.py</a>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="perf">
+  <div class="wrap">
+    <h2><span class="kicker">04 · Performance</span>성능 정량화</h2>
+
+    <h3>4-1. 압축 해제 오버헤드 벤치마크</h3>
+    <p>
+      "장비 기동 시 모델 로딩이 느리다"는 정성적 보고를 숫자로 만들어야 했습니다.
+      기동 스크립트가 <code>tar</code>를 verbose 로 호출하고 있었는데,
+      느린 시리얼 콘솔에 파일명을 한 줄씩 찍는 비용이 유의미한지 확인이 필요했습니다.
+    </p>
+
+    <h4>측정 정확도를 위해 한 것</h4>
+    <ol>
+      <li>
+        <strong><code>sync</code> 포함 측정.</strong>
+        <code>tar ... &amp;&amp; sync</code> 로 잽니다. sync 없이 재면 페이지 캐시에만 쓰고 반환되는
+        시간을 재게 되어 <em>실제 스토리지 쓰기 완료 시점을 놓칩니다.</em>
+      </li>
+      <li>
+        <strong>매 측정 전 동일 시작 조건 복원.</strong>
+        직전 측정이 남긴 파일이 있으면 tar 가 덮어쓰기를 하며 시간이 달라집니다.
+      </li>
+      <li>
+        <strong>타임아웃 시 <code>-1</code> 반환.</strong>
+        실패값을 결과에 섞지 않아 평균이 오염되지 않게 합니다.
+      </li>
+    </ol>
+
+    <div class="callout">
+      <div class="t">안전장치 — 집합 차분 기반 클린업</div>
+      <p>
+        운영 중인 장비에서 도는 스크립트이므로 원본 파일을 지우는 사고는 절대 없어야 합니다.
+        측정 시작 전 디렉터리 스냅샷을 떠 두고,
+        클린업 시 <code>current_files - existing_files</code> 로 <strong>새로 생긴 것만</strong> 삭제합니다.
+        추가 안전장치로 <code>.tar.gz</code> 원본은 명시적으로 skip 합니다.
+      </p>
+    </div>
+
+<pre><code>def cleanup_new_files(sock, existing_files):
+    current_files = list_dir_entries(sock)
+
+    # 집합 차분 — 이것이 안전장치의 핵심
+    new_files = current_files - existing_files
+
+    for filename in sorted(new_files):
+        # 이중 안전장치: 원본 아카이브는 어떤 경우에도 건드리지 않는다
+        if filename.endswith(".tar.gz"):
+            continue
+        send_command(sock, f"rm -rf './{filename}'", timeout=30)</code></pre>
+
+    <h4>왜 telnetlib 대신 raw socket 인가</h4>
+    <p>
+      verbose 모드는 수천 줄을 순식간에 쏟아냅니다.
+      <code>telnetlib.read_until()</code>은 기대 바이트열을 기다리는데,
+      대량 출력 중에는 프롬프트 문자가 데이터 중간에 우연히 등장하거나 버퍼가 밀립니다.
+      소켓을 직접 다루며 <strong>종료 판정을 이중으로</strong> 했습니다.
+    </p>
+    <ul>
+      <li>(a) 버퍼가 프롬프트 문자로 <em>끝나는가</em></li>
+      <li>(b) 0.5초 이상 신규 데이터 유입이 <em>멈췄는가</em> — idle 휴리스틱</li>
+    </ul>
+    <p>
+      추가로 <code>socket.timeout</code>이 발생해도 버퍼가 프롬프트로 끝나면
+      성공으로 처리하는 복구 경로를 뒀습니다.
+    </p>
+
+    <figure>
+      <img src="assets/img/benchmark-chart.svg" alt="파일 크기별 verbose 모드 오버헤드 막대 그래프">
+      <figcaption>파일 크기에 따라 오버헤드가 -19% ~ +23% 로 요동친다.</figcaption>
+    </figure>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>아카이브</th><th>크기</th><th>silent + sync</th><th>verbose + sync</th><th>오버헤드</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>model_a</code></td><td class="num">6.3 KB</td><td class="num">0.0994s</td><td class="num">0.1222s</td><td class="num pos">+22.92%</td></tr>
+        <tr><td><code>model_b</code></td><td class="num">6.3 KB</td><td class="num">0.0653s</td><td class="num">0.0683s</td><td class="num pos">+4.48%</td></tr>
+        <tr><td><code>model_c</code></td><td class="num">6.3 KB</td><td class="num">0.0567s</td><td class="num">0.0565s</td><td class="num neg">-0.36%</td></tr>
+        <tr><td><code>model_d</code></td><td class="num">5.4 MB</td><td class="num">7.8925s</td><td class="num">6.4021s</td><td class="num neg">-18.88%</td></tr>
+        <tr><td><code>model_e</code></td><td class="num">30.0 MB</td><td class="num">27.2925s</td><td class="num">27.1777s</td><td class="num neg">-0.42%</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout result">
+      <div class="t">해석</div>
+      <p>
+        작은 파일에서는 터미널 출력 비용이 전체 시간의 상당 부분을 차지하지만,
+        큰 파일에서는 압축 해제와 I/O 대기가 지배적이라 그 비용이 노이즈에 묻힙니다.
+        즉 <strong>"verbose 를 끄면 빨라진다"는 일반화는 틀렸고</strong>,
+        다수의 작은 아카이브를 순차 해제하는 기동 경로에서만 유효한 최적화입니다.
+        측정하지 않았다면 잘못된 결론을 내렸을 지점입니다.
+      </p>
+    </div>
+    <p class="small muted">
+      스크립트: <a href="scripts/03-performance/measure_extract_overhead.py">measure_extract_overhead.py</a> ·
+      원본 데이터: <a href="samples/tar_benchmark_result.csv">tar_benchmark_result.csv</a>
+    </p>
+
+    <h3>4-2. Glass-to-Glass 지연 측정</h3>
+    <p>
+      영상 장비의 End-to-End 지연(촬영 → 인코딩 → 전송 → 디코딩 → 표시)을 측정합니다.
+      밀리초 스톱워치를 두 장비가 동시에 촬영하고, 원본과 두 장비 출력을 한 화면에 배치해
+      캡처하면 <strong>한 장의 이미지 안에 세 시각이 함께 찍힙니다.</strong>
+    </p>
+
+    <figure>
+      <img src="assets/img/latency-roi.svg" alt="사분면 ROI 분할과 OCR 기반 지연 산출 과정">
+      <figcaption>ROI 분할 → OCR → 파싱 → 기준 대비 차분. 수백 장을 일괄 처리해 CSV 로 산출한다.</figcaption>
+    </figure>
+
+    <h4>OCR 자동화에서 가장 위험한 것</h4>
+    <p>
+      <strong>ROI 가 어긋났는데 그럴듯한 숫자가 나오는 상황</strong>입니다.
+      결과가 조용히 틀리면 알아챌 방법이 없습니다.
+      그래서 첫 이미지에 ROI 사각형과 인식 결과를 그려
+      <code>debug_roi.png</code>로 저장합니다. 사람이 1초 만에 영역 설정을 검증할 수 있습니다.
+    </p>
+    <ul>
+      <li><strong>ROI 를 비율(0.0–1.0)로 지정</strong> — 해상도가 다른 캡처 세션이 섞여도 동일 설정으로 동작</li>
+      <li><strong><code>--psm 7</code></strong> (single text line) — 숫자 한 줄만 있는 영역이라 페이지 세그멘테이션을 끄면 인식률이 오른다</li>
+      <li><strong>과한 이진화를 하지 않음</strong> — 화면 캡처는 대비가 이미 좋고, 이진화는 오히려 얇은 획을 지운다</li>
+      <li><strong>관용적 파싱</strong> — OCR 은 <code>:</code>와 <code>.</code>를 혼동한다. 숫자·구분자만 남기고 필드 수에 따라 유연하게 해석, 실패 시 <code>None</code> 반환으로 통계에서 자동 제외</li>
+    </ul>
+    <p class="small muted">
+      스크립트: <a href="scripts/03-performance/measure_latency_ocr.py">measure_latency_ocr.py</a>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="ops">
+  <div class="wrap">
+    <h2><span class="kicker">05 · Device Ops</span>운영 유틸리티</h2>
+
+    <div class="card">
+      <h3>collect_system_info.py</h3>
+      <div class="path"><a href="scripts/04-device-ops/collect_system_info.py">scripts/04-device-ops/collect_system_info.py</a></div>
+      <p>
+        이슈 리포트를 받았을 때 가장 먼저 확인해야 하는 항목
+        (커널 버전 · CPU/메모리 · 디스크 · 네트워크 · 프로세스)을 한 번에 수집해
+        타임스탬프가 붙은 리포트 파일로 남깁니다.
+      </p>
+      <p class="small">
+        <strong>파일로 남기는 이유:</strong> 장애 시점의 상태를 스냅샷으로 보존해야 사후 비교가 가능합니다.
+        같은 장비를 시간차로 여러 번 떠서 <code>diff</code> 하면 변화 지점이 드러납니다.
+      </p>
+      <p class="small">
+        <strong>이식성:</strong> 명령을 <code>ifconfig || ip addr</code>, <code>ps aux || ps</code> 처럼
+        폴백 형태로 구성해 busybox 빌드 구성이 달라도 동작합니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>stop_services.sh</h3>
+      <div class="path"><a href="scripts/04-device-ops/stop_services.sh">scripts/04-device-ops/stop_services.sh</a></div>
+      <p>
+        장비 위에서 실행되어 애플리케이션 데몬을 종료합니다.
+        단순해 보이지만 두 가지 함정을 밟고 나서야 완성된 스크립트입니다.
+      </p>
+
+      <h4>함정 1 — 스크립트가 자기 자신을 죽인다</h4>
+      <p class="small">
+        <code>ps -ef | grep myapp</code> 은 grep 프로세스 자신과
+        <em>이 스크립트의 커맨드라인까지</em> 매치시킵니다. 그 PID 를 kill 하면 스크립트가 자살합니다.
+        프로세스를 <strong>전체 경로</strong>로 지정해 grep 하는 것으로 해결했습니다.
+      </p>
+
+      <h4>함정 2 — busybox 의 ps 는 컬럼이 다르다</h4>
+      <p class="small">
+        일반적인 procps 의 <code>ps -ef</code> 는 두 번째 컬럼이 PID 지만,
+        대상 장비의 busybox ps 는 <strong>첫 번째 컬럼이 PID</strong> 였습니다.
+        실제 장비에서 출력을 확인하고 awk 필드 번호를 맞췄습니다.
+      </p>
+
+<pre><code>PROCESS_PATHS="/opt/app/bin/media-encoder /opt/app/bin/vision-init"
+
+for process_path in $PROCESS_PATHS
+do
+    # 전체 경로 매칭 + grep 자신 제외 + busybox 의 PID 컬럼($1)
+    pid=$(ps -ef | grep "$process_path" | grep -v grep | awk '{print $1}')
+    [ -n "$pid" ] &amp;&amp; kill $pid
+done</code></pre>
+      <p class="small muted">
+        문서에 남길 가치가 있는 종류의 지식입니다 — 환경 차이는 코드를 읽어서는 알 수 없고,
+        실제 타깃에서 출력을 확인해야만 드러납니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="harness">
+  <div class="wrap">
+    <h2><span class="kicker">06 · Test Harness</span>회귀 테스트 하네스</h2>
+
+    <div class="card">
+      <h3>regression_test.sh</h3>
+      <div class="path"><a href="scripts/05-test-harness/regression_test.sh">scripts/05-test-harness/regression_test.sh</a></div>
+      <p>
+        C 유틸리티에 대한 자동 회귀 테스트입니다.
+        <strong>setup → execute → verify → teardown</strong> 4단 구조로,
+        픽스처를 매번 새로 만들고 끝나면 지웁니다.
+      </p>
+
+      <h4>의도적으로 설계한 엣지 케이스</h4>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th>픽스처</th><th>기대</th><th>검증하는 분기</th></tr></thead>
+        <tbody>
+          <tr><td><code>data1.bin</code></td><td>포함</td><td>정상 경로</td></tr>
+          <tr><td><code>data2.BIN</code></td><td>포함</td><td>확장자 대소문자</td></tr>
+          <tr><td><code>.hidden.bin</code></td><td>포함</td><td>숨김 파일 처리</td></tr>
+          <tr><td><code>document.txt</code></td><td>제외</td><td>확장자 필터</td></tr>
+          <tr><td><code>no_extension</code></td><td>제외</td><td>확장자 없음</td></tr>
+          <tr><td><code>sub_dir/</code></td><td>제외</td><td>파일 vs 디렉터리</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h4>CI 연동</h4>
+      <ul>
+        <li>실행 파일 경로를 인자로 받는다 — <code>${1:-./list_files}</code></li>
+        <li>디렉터리 순회 순서는 파일시스템에 따라 다르므로 <strong>양쪽을 <code>sort</code>한 뒤 비교</strong></li>
+        <li>실패 시 <code>diff &lt;(...) &lt;(...)</code> 프로세스 치환으로 차이를 즉시 출력</li>
+        <li><code>exit $RESULT</code> 로 판정을 종료 코드에 실어 보낸다 → CI 가 성공/실패를 그대로 인식</li>
+      </ul>
+      <p class="small muted">
+        <code>set -e</code> 를 켰기 때문에 diff 뒤에 <code>|| true</code> 가 필요합니다.
+        그렇지 않으면 실패 케이스에서 teardown 이 실행되지 않습니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>sample_random_files.sh</h3>
+      <div class="path"><a href="scripts/05-test-harness/sample_random_files.sh">scripts/05-test-harness/sample_random_files.sh</a></div>
+      <p>
+        장비에 올릴 테스트 입력 세트를 매번 다르게 만들기 위해,
+        소스 디렉터리에서 이미지를 무작위 N개 뽑아 아카이브로 묶습니다.
+      </p>
+
+      <h4>핵심 — NULL 구분자 파이프라인</h4>
+      <p class="small">
+        파일명에 공백이나 개행이 들어 있으면 개행 기준 파이프라인은
+        파일 하나를 여러 개로 쪼갭니다. 실제 데이터셋 파일명에 공백이 흔해서 겪은 문제입니다.
+        <strong>파이프라인 전 구간을 NULL(<code>\0</code>) 구분자로 통일</strong>했습니다 —
+        한 곳이라도 개행 기준이면 체인 전체가 깨집니다.
+      </p>
+
+<pre><code>find ... -print0  │  결과를 NULL 로 구분해 출력
+shuf -z           │  NULL 구분 입력 → NULL 구분 출력
+xargs -0          │  NULL 구분 입력을 인자로 변환
+tar --null -T -   │  NULL 구분 파일 목록을 stdin 에서 읽음</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="lessons">
+  <div class="wrap">
+    <h2><span class="kicker">Lessons</span>이 작업들에서 배운 것</h2>
+
+    <h3>1. 자동화의 가치는 속도가 아니라 표본 크기에 있다</h3>
+    <p>
+      46대를 11초에 점검하는 것 자체가 목적이 아니었습니다.
+      순차 실행의 6~8분이라는 시차가 <em>측정 오차가 되어 실험을 무의미하게 만들기</em> 때문에
+      병렬화가 필요했습니다. 자동화가 없었다면 "커널 A 가 더 안정적인가"라는 질문에
+      답할 표본 자체를 모을 수 없었습니다.
+    </p>
+
+    <h3>2. 로그는 걸러내야 정보가 된다</h3>
+    <p>
+      링크 플랩 탐지에서 배운 것은, 대량의 로그에서 <strong>무엇을 찾을지보다
+      무엇을 버릴지를 정의하는 것</strong>이 어렵다는 점입니다.
+      "부팅 후 60초"라는 임계값 하나로 46대 전부가 걸리던 결과가 2대로 좁혀졌습니다.
+    </p>
+
+    <h3>3. 측정은 무엇을 포함할지 정하는 순간 결론이 갈린다</h3>
+    <p>
+      <code>sync</code>를 붙이느냐 마느냐로 "빠르다"의 정의가 달라집니다.
+      페이지 캐시까지만 재면 실제 스토리지 쓰기가 끝나기 전에 반환되고,
+      그 숫자로 최적화를 판단하면 틀립니다.
+      그리고 실제로 측정해 보니 <strong>예상과 반대 방향의 결과</strong>가 나왔습니다.
+    </p>
+
+    <h3>4. 타깃 환경은 코드를 읽어서 알 수 없다</h3>
+    <p>
+      busybox 의 <code>ps</code> 컬럼 위치, <code>stat</code> 유무, telnet 의 PTY 요구 —
+      전부 실제 장비에서 출력을 확인하고 나서야 알게 된 것들입니다.
+      그래서 이런 환경 차이는 발견할 때마다 <strong>코드 주석에 이유와 함께</strong> 남겼습니다.
+    </p>
+
+    <h3>5. 운영 장비에서 도는 스크립트는 구조적으로 안전해야 한다</h3>
+    <p>
+      "조심해서 짜기"로는 부족합니다.
+      집합 차분으로 새로 생긴 파일만 지우고, 원본 확장자는 명시적으로 skip 하고,
+      부하 명령은 자기 종료형으로 만드는 것 —
+      <strong>실수해도 피해가 나지 않는 구조</strong>가 필요합니다.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      실제 업무에서 작성한 자동화 스크립트를 공개용으로 익명화하여 재구성한 포트폴리오입니다.
+      SoC 명칭 · 제품명 · 사내 네트워크 대역 · 자격증명은 모두 제거하거나 일반화했으며,
+      동작 로직과 설계 의도는 원본과 동일합니다.
+    </p>
+    <p>
+      <a href="https://github.com/leeyunhome/automation-portfolio">GitHub 저장소</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 440" role="img" aria-label="tar verbose 오버헤드 측정 결과">
+  <style>
+    :root { color-scheme: light dark; }
+    .txt   { fill: #1f2328; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono  { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .mutedmono { fill: #656d76; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .axis  { stroke: #8c959f; stroke-width: 1.4; }
+    .grid  { stroke: #e1e4e8; stroke-width: 1; }
+    .pos   { fill: #cf222e; }
+    .neg   { fill: #1a7f37; }
+    .card  { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+
+    @media (prefers-color-scheme: dark) {
+      .txt   { fill: #e6edf3; }
+      .mono  { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .mutedmono { fill: #9198a1; }
+      .axis  { stroke: #6a737d; }
+      .grid  { stroke: #2a3038; }
+      .pos   { fill: #ff7b72; }
+      .neg   { fill: #3fb950; }
+      .card  { fill: #151b23; stroke: #3d444d; }
+    }
+  </style>
+
+  <text class="txt" x="24" y="28" font-size="15" font-weight="600">tar -zxvf(verbose) 오버헤드 — 파일 크기별 측정 결과</text>
+  <text class="muted" x="24" y="48" font-size="12">양수 = verbose 가 느림 · 음수 = 차이가 측정 노이즈에 묻힘 (silent + sync 기준 대비 %)</text>
+
+  <!-- Grid lines -->
+  <line class="grid" x1="230" y1="86"  x2="820" y2="86"/>
+  <line class="grid" x1="230" y1="128" x2="820" y2="128"/>
+  <line class="grid" x1="230" y1="212" x2="820" y2="212"/>
+  <line class="grid" x1="230" y1="254" x2="820" y2="254"/>
+
+  <!-- Scale labels -->
+  <text class="mutedmono" x="222" y="90"  font-size="10" text-anchor="end">+30%</text>
+  <text class="mutedmono" x="222" y="132" font-size="10" text-anchor="end">+15%</text>
+  <text class="mutedmono" x="222" y="174" font-size="10" text-anchor="end">0%</text>
+  <text class="mutedmono" x="222" y="216" font-size="10" text-anchor="end">-15%</text>
+  <text class="mutedmono" x="222" y="258" font-size="10" text-anchor="end">-30%</text>
+
+  <!-- Zero axis -->
+  <line class="axis" x1="230" y1="170" x2="820" y2="170"/>
+
+  <!-- Bars: baseline y=170, 15% = 42px -->
+  <!-- +22.92% (6 KB) -->
+  <rect class="pos" x="256" y="106" width="58" height="64" rx="2"/>
+  <text class="txt" x="285" y="98" font-size="11" font-weight="600" text-anchor="middle">+22.9%</text>
+
+  <!-- +4.48% (6 KB) -->
+  <rect class="pos" x="368" y="157" width="58" height="13" rx="2"/>
+  <text class="txt" x="397" y="149" font-size="11" font-weight="600" text-anchor="middle">+4.5%</text>
+
+  <!-- -0.36% (6 KB) -->
+  <rect class="neg" x="480" y="170" width="58" height="3" rx="1"/>
+  <text class="txt" x="509" y="188" font-size="11" font-weight="600" text-anchor="middle">-0.4%</text>
+
+  <!-- -18.88% (5.4 MB) -->
+  <rect class="neg" x="592" y="170" width="58" height="53" rx="2"/>
+  <text class="txt" x="621" y="238" font-size="11" font-weight="600" text-anchor="middle">-18.9%</text>
+
+  <!-- -0.42% (30 MB) -->
+  <rect class="neg" x="704" y="170" width="58" height="3" rx="1"/>
+  <text class="txt" x="733" y="188" font-size="11" font-weight="600" text-anchor="middle">-0.4%</text>
+
+  <!-- X labels -->
+  <text class="mutedmono" x="285" y="278" font-size="10" text-anchor="middle">6.2 KB</text>
+  <text class="mutedmono" x="397" y="278" font-size="10" text-anchor="middle">6.3 KB</text>
+  <text class="mutedmono" x="509" y="278" font-size="10" text-anchor="middle">6.3 KB</text>
+  <text class="mutedmono" x="621" y="278" font-size="10" text-anchor="middle">5.4 MB</text>
+  <text class="mutedmono" x="733" y="278" font-size="10" text-anchor="middle">30.0 MB</text>
+  <text class="muted" x="525" y="298" font-size="11" text-anchor="middle">아카이브 크기</text>
+
+  <!-- Interpretation card -->
+  <rect class="card" x="24" y="318" width="866" height="106" rx="8"/>
+  <text class="txt" x="44" y="342" font-size="12" font-weight="600">해석</text>
+  <text class="muted" x="44" y="364" font-size="11">· 작은 파일(수 KB)에서는 verbose 출력 비용이 전체 시간의 상당 부분을 차지해 최대 +23% 까지 벌어진다.</text>
+  <text class="muted" x="44" y="384" font-size="11">· 큰 파일(5~30 MB)에서는 압축 해제와 디스크 I/O 대기가 지배적이라 터미널 출력 비용이 노이즈에 묻힌다.</text>
+  <text class="muted" x="44" y="404" font-size="11">· 결론: "verbose 를 끄면 빨라진다" 는 일반화는 틀렸다. 다수의 작은 아카이브를 순차 해제하는 기동 경로에서만 유효한 최적화다.</text>
+</svg>

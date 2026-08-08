@@ -1,0 +1,6 @@
+File Name,Size (Bytes),Silent(zxf)+Sync (sec),Verbose(zxvf)+Sync (sec),Diff (sec),Overhead (%)
+model_a_1_672_384.tar.gz,6263,0.0994,0.1222,0.0228,22.92
+model_b_1_672_384.tar.gz,6293,0.0653,0.0683,0.0029,4.48
+model_c_1_672_384.tar.gz,6258,0.0567,0.0565,-0.0002,-0.36
+model_d_1_640_640.tar.gz,5448724,7.8925,6.4021,-1.4903,-18.88
+model_e_5_640_640.tar.gz,30040983,27.2925,27.1777,-0.1148,-0.42

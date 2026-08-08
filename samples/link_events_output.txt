@@ -1,0 +1,54 @@
+$ BOOT_THRESHOLD=60 ./analyze_link_events.sh 11 20
+
+==========================================
+ Link Down/Up 검사 시작
+ 대상       : 192.168.10.11 ~ 192.168.10.20
+ 부팅 기준  : 60초
+ 로그 경로  : ./dmesg_logs
+==========================================
+
+ip : 192.168.10.11
+  [192.168.10.11] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.12
+  [192.168.10.12] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.13
+  [192.168.10.13] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.14
+
+  [192.168.10.14] *** 부팅 이후 LINK 이벤트 감지됨! ***
+    [ 4213.882910] eth-mac 40800000.eth eth0: Link is Down
+    [ 4216.104552] eth-mac 40800000.eth eth0: Link is Up - 100Mbps/Full - flow control off
+    [ 8871.339284] eth-mac 40800000.eth eth0: Link is Down
+    [ 8873.551017] eth-mac 40800000.eth eth0: Link is Up - 100Mbps/Full - flow control off
+ip : 192.168.10.15
+  [192.168.10.15] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.16
+  [192.168.10.16] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.17
+  [192.168.10.17] WARNING: 로그 파일을 찾을 수 없습니다 (수집 실패)
+ip : 192.168.10.18
+  [192.168.10.18] OK - 부팅 이후 link 변동 없음
+ip : 192.168.10.19
+
+  [192.168.10.19] *** 부팅 이후 LINK 이벤트 감지됨! ***
+    [ 1502.774193] eth-mac 40800000.eth eth0: Link is Down
+    [ 1504.982655] eth-mac 40800000.eth eth0: Link is Up - 100Mbps/Full - flow control off
+ip : 192.168.10.20
+  [192.168.10.20] OK - 부팅 이후 link 변동 없음
+
+==========================================
+ 검사 완료 — 로그 원본: ./dmesg_logs
+==========================================
+
+
+--- 참고: 필터링되기 전의 원본 dmesg (모든 장비에 공통으로 존재) ---
+
+[    6.985155] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready          <- 60초 이내이므로 무시
+[    7.061095] IPv6: ADDRCONF(NETDEV_UP): lo: link is not ready            <- 무시
+[    7.066937] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready          <- 무시
+[    7.072859] IPv6: ADDRCONF(NETDEV_UP): sit0: link is not ready          <- 무시
+[   10.104552] eth-mac 40800000.eth eth0: Link is Up - 100Mbps/Full        <- 무시 (정상 부팅 협상)
+[   10.112539] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready     <- 무시
+
+  단순 grep 이었다면 위 6줄 때문에 46대 전부가 "이벤트 있음" 으로 잡힌다.
+  타임스탬프 필터링 덕분에 실제 이상 장비 2대만 남았다.

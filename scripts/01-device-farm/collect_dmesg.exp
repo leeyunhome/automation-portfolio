@@ -1,0 +1,52 @@
+#!/usr/bin/expect -f
+# =============================================================================
+# collect_dmesg.exp
+#
+# 대상 장비에 telnet 으로 접속해 dmesg 전량을 지정 파일로 저장한다.
+# analyze_link_events.sh 가 장비별로 이 스크립트를 호출한다.
+#
+# 사용법
+#   ./collect_dmesg.exp <ip> <logfile>
+#   예) ./collect_dmesg.exp 192.168.10.11 ./dmesg_logs/dmesg_192.168.10.11.log
+#
+# 설계 포인트
+#   - log_file -noappend 로 expect 세션 전체를 그대로 파일에 남긴다.
+#     별도 파싱 없이 원본 로그를 보존하므로 사후 재분석이 가능하다.
+#   - 명령 완료 판정은 "프롬프트 재출현" 으로 한다. dmesg 는 출력량이 크고
+#     소요시간이 가변적이라 sleep 기반 대기는 신뢰할 수 없다.
+# =============================================================================
+
+set ip      [lindex $argv 0]
+set logfile [lindex $argv 1]
+
+set user    "root"
+set passwd  "root"
+
+# 로그 파일이 지정된 경우에만 세션 로깅 활성화
+if {$logfile ne ""} {
+    log_file -noappend $logfile
+}
+
+spawn telnet $ip
+
+expect "login:"
+send "$user\r"
+
+expect "Password:"
+send "$passwd\r"
+
+# 로그인 직후 셸 프롬프트 대기
+expect "#"
+
+send "dmesg\r"
+
+# dmesg 출력이 모두 끝나고 프롬프트가 다시 뜰 때까지 대기
+expect "#"
+
+send "exit\r"
+expect eof
+
+# 로그 파일 닫기
+if {$logfile ne ""} {
+    log_file
+}

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" role="img" aria-label="부팅 임계값 기반 dmesg 필터링">
+  <style>
+    :root { color-scheme: light dark; }
+    .txt   { fill: #1f2328; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono  { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .mutedmono { fill: #656d76; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .axis  { stroke: #8c959f; stroke-width: 1.6; }
+    .tick  { stroke: #afb8c1; stroke-width: 1; }
+    .zoneA { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
+    .zoneB { fill: #ffffff; stroke: #d0d7de; stroke-width: 1; }
+    .thr   { stroke: #bf3989; stroke-width: 2; stroke-dasharray: 6 4; }
+    .thrtx { fill: #bf3989; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .evOK  { fill: #afb8c1; }
+    .evBad { fill: #cf222e; }
+    .oktx  { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .badtx { fill: #cf222e; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .card  { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+
+    @media (prefers-color-scheme: dark) {
+      .txt   { fill: #e6edf3; }
+      .mono  { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .mutedmono { fill: #9198a1; }
+      .axis  { stroke: #6a737d; }
+      .tick  { stroke: #4a5058; }
+      .zoneA { fill: #1c2128; stroke: #3d444d; }
+      .zoneB { fill: #151b23; stroke: #3d444d; }
+      .thr   { stroke: #d2a8ff; }
+      .thrtx { fill: #d2a8ff; }
+      .evOK  { fill: #4a5058; }
+      .evBad { fill: #ff7b72; }
+      .oktx  { fill: #9198a1; }
+      .badtx { fill: #ff7b72; }
+      .card  { fill: #151b23; stroke: #3d444d; }
+    }
+  </style>
+
+  <text class="txt" x="24" y="28" font-size="15" font-weight="600">커널 타임스탬프 기반 노이즈 필터링</text>
+  <text class="muted" x="24" y="48" font-size="12">"이벤트가 있느냐" 가 아니라 "언제 발생했느냐" 로 판정한다.</text>
+
+  <!-- Zones -->
+  <rect class="zoneA" x="24" y="76" width="176" height="118" rx="6"/>
+  <rect class="zoneB" x="200" y="76" width="696" height="118" rx="6"/>
+
+  <text class="oktx"  x="112" y="98" font-size="12" font-weight="600" text-anchor="middle">부팅 구간</text>
+  <text class="muted" x="112" y="114" font-size="10" text-anchor="middle">0 – 60초 · 무시</text>
+
+  <text class="badtx" x="548" y="98" font-size="12" font-weight="600" text-anchor="middle">운영 구간</text>
+  <text class="muted" x="548" y="114" font-size="10" text-anchor="middle">60초 이후 · 이상 징후로 승격</text>
+
+  <!-- Timeline axis -->
+  <line class="axis" x1="24" y1="170" x2="890" y2="170"/>
+  <polygon class="axis" points="890,170 882,166 882,174" fill="currentColor"/>
+
+  <!-- Threshold -->
+  <line class="thr" x1="200" y1="76" x2="200" y2="210"/>
+  <text class="thrtx" x="200" y="226" font-size="12" font-weight="600" text-anchor="middle">BOOT_THRESHOLD = 60s</text>
+
+  <!-- Ticks -->
+  <line class="tick" x1="24"  y1="166" x2="24"  y2="174"/>
+  <text class="mutedmono" x="24" y="190" font-size="10" text-anchor="middle">0</text>
+  <line class="tick" x1="380" y1="166" x2="380" y2="174"/>
+  <text class="mutedmono" x="380" y="190" font-size="10" text-anchor="middle">1500</text>
+  <line class="tick" x1="600" y1="166" x2="600" y2="174"/>
+  <text class="mutedmono" x="600" y="190" font-size="10" text-anchor="middle">4200</text>
+  <line class="tick" x1="790" y1="166" x2="790" y2="174"/>
+  <text class="mutedmono" x="790" y="190" font-size="10" text-anchor="middle">8800</text>
+
+  <!-- Boot-time events (ignored) -->
+  <circle class="evOK" cx="70"  cy="150" r="5"/>
+  <circle class="evOK" cx="86"  cy="150" r="5"/>
+  <circle class="evOK" cx="102" cy="150" r="5"/>
+  <circle class="evOK" cx="118" cy="150" r="5"/>
+  <circle class="evOK" cx="152" cy="150" r="5"/>
+  <circle class="evOK" cx="164" cy="150" r="5"/>
+
+  <!-- Post-boot events (flagged) -->
+  <circle class="evBad" cx="380" cy="150" r="6"/>
+  <circle class="evBad" cx="396" cy="150" r="6"/>
+  <circle class="evBad" cx="600" cy="150" r="6"/>
+  <circle class="evBad" cx="616" cy="150" r="6"/>
+  <circle class="evBad" cx="790" cy="150" r="6"/>
+  <circle class="evBad" cx="806" cy="150" r="6"/>
+
+  <!-- Legend -->
+  <circle class="evOK"  cx="34" cy="252" r="5"/>
+  <text class="muted" x="46" y="256" font-size="11">부팅 시 PHY 협상 로그 — 모든 장비에 존재하는 정상 이벤트</text>
+  <circle class="evBad" cx="34" cy="274" r="5"/>
+  <text class="muted" x="46" y="278" font-size="11">운영 중 링크 플랩 — 실제 조사 대상</text>
+
+  <!-- Extraction card -->
+  <rect class="card" x="24" y="300" width="866" height="98" rx="8"/>
+  <text class="txt" x="44" y="324" font-size="12" font-weight="600">타임스탬프 추출</text>
+  <text class="mono" x="44" y="348" font-size="12">timestamp=$(echo "$line" | grep -oP '\[\s*\K[0-9]+(?=\.)')</text>
+  <text class="muted" x="44" y="370" font-size="11">\[\s*  여는 대괄호와 공백    ·    \K  여기까지 매치 결과에서 제외    ·    [0-9]+  정수부    ·    (?=\.)  뒤에 소수점이 오는 경우만</text>
+  <text class="muted" x="44" y="388" font-size="11">"[   10.026633] ..." → 10  ·  단순 grep 이었다면 46대 전부가 "이벤트 있음"으로 잡혀 판정이 불가능했다.</text>
+</svg>

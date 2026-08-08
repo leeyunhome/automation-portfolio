@@ -1,0 +1,23 @@
+# 실행 산출물 — 실제 장비 정보가 담길 수 있으므로 커밋 금지
+dmesg_logs/
+reports/
+screenshots_*/
+*.log
+debug_roi.png
+latency_results.csv
+tar_sync_comparison_*.csv
+
+# 자격증명
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 460" role="img" aria-label="테스트 팜 구조도">
+  <style>
+    :root { color-scheme: light dark; }
+    .bg     { fill: none; }
+    .txt    { fill: #1f2328; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono   { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted  { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .box    { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+    .hostbox{ fill: #ddf4ff; stroke: #54aeff; stroke-width: 1.5; }
+    .grpbox { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1.5; }
+    .base   { fill: #fff8c5; stroke: #d4a72c; stroke-width: 1.5; }
+    .line   { stroke: #8c959f; stroke-width: 1.4; fill: none; }
+    .accent { fill: #0969da; }
+    .dev    { fill: #ffffff; stroke: #afb8c1; stroke-width: 1; }
+    .devA   { fill: #dafbe1; stroke: #4ac26b; stroke-width: 1; }
+    .devB   { fill: #ddf4ff; stroke: #54aeff; stroke-width: 1; }
+    .devC   { fill: #fbefff; stroke: #c297ff; stroke-width: 1; }
+    .devD   { fill: #ffe7e7; stroke: #ff8182; stroke-width: 1; }
+    .devE   { fill: #fff8c5; stroke: #d4a72c; stroke-width: 1; }
+
+    @media (prefers-color-scheme: dark) {
+      .txt    { fill: #e6edf3; }
+      .mono   { fill: #e6edf3; }
+      .muted  { fill: #9198a1; }
+      .box    { fill: #151b23; stroke: #3d444d; }
+      .hostbox{ fill: #121d2f; stroke: #316dca; }
+      .grpbox { fill: #151b23; stroke: #3d444d; }
+      .base   { fill: #2b2413; stroke: #9e6a03; }
+      .line   { stroke: #6a737d; }
+      .accent { fill: #58a6ff; }
+      .dev    { fill: #1c2128; stroke: #4a5058; }
+      .devA   { fill: #0f2417; stroke: #2ea043; }
+      .devB   { fill: #121d2f; stroke: #316dca; }
+      .devC   { fill: #21162d; stroke: #8957e5; }
+      .devD   { fill: #2b1517; stroke: #c93c37; }
+      .devE   { fill: #2b2413; stroke: #9e6a03; }
+    }
+  </style>
+
+  <rect class="bg" width="920" height="460"/>
+
+  <!-- Control host -->
+  <rect class="hostbox" x="24" y="150" width="210" height="160" rx="8"/>
+  <text class="txt" x="129" y="177" font-size="15" font-weight="600" text-anchor="middle">Control Host</text>
+  <text class="muted" x="129" y="196" font-size="11" text-anchor="middle">bash + expect + python</text>
+  <line class="line" x1="44" y1="206" x2="214" y2="206"/>
+  <text class="mono" x="44" y="226" font-size="11">deploy_kernel.sh</text>
+  <text class="mono" x="44" y="245" font-size="11">reboot_devices.sh</text>
+  <text class="mono" x="44" y="264" font-size="11">check_kernel_version.sh</text>
+  <text class="mono" x="44" y="283" font-size="11">check_uptime_parallel.sh</text>
+  <text class="mono" x="44" y="302" font-size="11">analyze_link_events.sh</text>
+
+  <!-- Fan-out label -->
+  <text class="accent" x="290" y="205" font-size="12" font-weight="600">telnet / ftp</text>
+  <text class="muted" x="290" y="222" font-size="11">46 workers in parallel</text>
+
+  <!-- Fan-out lines -->
+  <path class="line" d="M234 230 C 300 230, 320 60, 400 60"/>
+  <path class="line" d="M234 230 C 300 230, 320 135, 400 135"/>
+  <path class="line" d="M234 230 C 300 230, 320 210, 400 210"/>
+  <path class="line" d="M234 230 C 300 230, 320 285, 400 285"/>
+  <path class="line" d="M234 230 C 300 230, 320 375, 400 375"/>
+
+  <!-- Group rows -->
+  <!-- rev-A -->
+  <rect class="grpbox" x="400" y="34" width="496" height="52" rx="6"/>
+  <text class="txt" x="416" y="56" font-size="13" font-weight="600">rev-A</text>
+  <text class="muted" x="416" y="73" font-size="10">.11 – .19</text>
+  <g>
+    <rect class="devA" x="488" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="524" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="560" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="596" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="632" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="668" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="704" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="740" y="46" width="30" height="28" rx="4"/>
+    <rect class="devA" x="776" y="46" width="30" height="28" rx="4"/>
+  </g>
+  <text class="muted" x="824" y="65" font-size="11">9대</text>
+
+  <!-- rev-B -->
+  <rect class="grpbox" x="400" y="109" width="496" height="52" rx="6"/>
+  <text class="txt" x="416" y="131" font-size="13" font-weight="600">rev-B</text>
+  <text class="muted" x="416" y="148" font-size="10">.20 – .28</text>
+  <g>
+    <rect class="devB" x="488" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="524" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="560" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="596" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="632" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="668" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="704" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="740" y="121" width="30" height="28" rx="4"/>
+    <rect class="devB" x="776" y="121" width="30" height="28" rx="4"/>
+  </g>
+  <text class="muted" x="824" y="140" font-size="11">9대</text>
+
+  <!-- rev-C -->
+  <rect class="grpbox" x="400" y="184" width="496" height="52" rx="6"/>
+  <text class="txt" x="416" y="206" font-size="13" font-weight="600">rev-C</text>
+  <text class="muted" x="416" y="223" font-size="10">.29 – .37</text>
+  <g>
+    <rect class="devC" x="488" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="524" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="560" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="596" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="632" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="668" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="704" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="740" y="196" width="30" height="28" rx="4"/>
+    <rect class="devC" x="776" y="196" width="30" height="28" rx="4"/>
+  </g>
+  <text class="muted" x="824" y="215" font-size="11">9대</text>
+
+  <!-- rev-D -->
+  <rect class="grpbox" x="400" y="259" width="496" height="52" rx="6"/>
+  <text class="txt" x="416" y="281" font-size="13" font-weight="600">rev-D</text>
+  <text class="muted" x="416" y="298" font-size="10">.38 – .46</text>
+  <g>
+    <rect class="devD" x="488" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="524" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="560" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="596" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="632" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="668" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="704" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="740" y="271" width="30" height="28" rx="4"/>
+    <rect class="devD" x="776" y="271" width="30" height="28" rx="4"/>
+  </g>
+  <text class="muted" x="824" y="290" font-size="11">9대</text>
+
+  <!-- baseline -->
+  <rect class="base" x="400" y="349" width="496" height="52" rx="6"/>
+  <text class="txt" x="416" y="371" font-size="13" font-weight="600">baseline</text>
+  <text class="muted" x="416" y="388" font-size="10">.47 – .56</text>
+  <g>
+    <rect class="devE" x="488" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="521" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="554" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="587" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="620" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="653" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="686" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="719" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="752" y="361" width="28" height="28" rx="4"/>
+    <rect class="devE" x="785" y="361" width="28" height="28" rx="4"/>
+  </g>
+  <text class="muted" x="828" y="380" font-size="11">10대</text>
+
+  <!-- Footer note -->
+  <text class="muted" x="400" y="428" font-size="11">IP 대역 = 커널 리비전 그룹. 동일 조건에서 커널만 바꿔 장기 소킹 비교가 가능하도록 배정.</text>
+  <text class="muted" x="400" y="446" font-size="11">총 46대 · 제어 호스트 1대에서 전 과정(플래싱 → 재기동 → 검증 → 로그 분석)을 무인 수행.</text>
+</svg>

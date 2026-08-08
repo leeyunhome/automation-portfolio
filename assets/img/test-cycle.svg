@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 260" role="img" aria-label="커널 검증 회귀 사이클">
+  <style>
+    :root { color-scheme: light dark; }
+    .txt   { fill: #1f2328; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono  { fill: #1f2328; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { fill: #656d76; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .mutedmono { fill: #656d76; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .step  { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+    .num   { fill: #0969da; }
+    .arrow { stroke: #8c959f; stroke-width: 1.6; fill: none; }
+    .loop  { stroke: #bf3989; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+    .looptx{ fill: #bf3989; font-family: ui-sans-serif, system-ui, sans-serif; }
+
+    @media (prefers-color-scheme: dark) {
+      .txt   { fill: #e6edf3; }
+      .mono  { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .mutedmono { fill: #9198a1; }
+      .step  { fill: #151b23; stroke: #3d444d; }
+      .num   { fill: #58a6ff; }
+      .arrow { stroke: #6a737d; }
+      .loop  { stroke: #d2a8ff; }
+      .looptx{ fill: #d2a8ff; }
+    }
+  </style>
+
+  <text class="txt" x="24" y="28" font-size="15" font-weight="600">커널 검증 회귀 사이클 — 5개 스크립트가 하나의 파이프라인을 이룬다</text>
+
+  <!-- Step 1 -->
+  <rect class="step" x="24" y="60" width="156" height="90" rx="8"/>
+  <text class="num" x="40" y="84" font-size="13" font-weight="700">1</text>
+  <text class="txt" x="40" y="104" font-size="12" font-weight="600">배포</text>
+  <text class="mutedmono" x="40" y="122" font-size="9.5">deploy_kernel.sh</text>
+  <text class="muted" x="40" y="138" font-size="10">ftpput 로 커널 플래싱</text>
+
+  <path class="arrow" d="M180 105 L 208 105"/>
+  <polygon class="arrow" points="208,105 200,101 200,109" fill="currentColor"/>
+
+  <!-- Step 2 -->
+  <rect class="step" x="212" y="60" width="156" height="90" rx="8"/>
+  <text class="num" x="228" y="84" font-size="13" font-weight="700">2</text>
+  <text class="txt" x="228" y="104" font-size="12" font-weight="600">재기동</text>
+  <text class="mutedmono" x="228" y="122" font-size="9.5">reboot_devices.sh</text>
+  <text class="muted" x="228" y="138" font-size="10">46대 동시 리셋</text>
+
+  <path class="arrow" d="M368 105 L 396 105"/>
+  <polygon class="arrow" points="396,105 388,101 388,109" fill="currentColor"/>
+
+  <!-- Step 3 -->
+  <rect class="step" x="400" y="60" width="156" height="90" rx="8"/>
+  <text class="num" x="416" y="84" font-size="13" font-weight="700">3</text>
+  <text class="txt" x="416" y="104" font-size="12" font-weight="600">검증</text>
+  <text class="mutedmono" x="416" y="122" font-size="9.5">check_kernel_version.sh</text>
+  <text class="muted" x="416" y="138" font-size="10">의도한 커널이 올라갔나</text>
+
+  <path class="arrow" d="M556 105 L 584 105"/>
+  <polygon class="arrow" points="584,105 576,101 576,109" fill="currentColor"/>
+
+  <!-- Step 4 -->
+  <rect class="step" x="588" y="60" width="156" height="90" rx="8"/>
+  <text class="num" x="604" y="84" font-size="13" font-weight="700">4</text>
+  <text class="txt" x="604" y="104" font-size="12" font-weight="600">소킹 집계</text>
+  <text class="mutedmono" x="604" y="122" font-size="9.5">check_uptime_parallel.sh</text>
+  <text class="muted" x="604" y="138" font-size="10">리비전별 무재부팅 시간</text>
+
+  <path class="arrow" d="M744 105 L 772 105"/>
+  <polygon class="arrow" points="772,105 764,101 764,109" fill="currentColor"/>
+
+  <!-- Step 5 -->
+  <rect class="step" x="776" y="60" width="120" height="90" rx="8"/>
+  <text class="num" x="792" y="84" font-size="13" font-weight="700">5</text>
+  <text class="txt" x="792" y="104" font-size="12" font-weight="600">로그 분석</text>
+  <text class="mutedmono" x="792" y="122" font-size="9.5">analyze_link</text>
+  <text class="mutedmono" x="792" y="134" font-size="9.5">_events.sh</text>
+
+  <!-- Loop back -->
+  <path class="loop" d="M836 150 L 836 190 L 102 190 L 102 150"/>
+  <polygon class="loop" points="102,150 98,158 106,158" fill="currentColor"/>
+  <text class="looptx" x="470" y="207" font-size="11" text-anchor="middle" font-weight="600">다음 커널 리비전으로 반복</text>
+
+  <text class="muted" x="24" y="238" font-size="11">각 단계는 독립 실행이 가능하면서도, 앞 단계의 산출물(플래싱된 커널 / 부팅된 장비 / 수집된 dmesg)을 다음 단계가 그대로 받는다.</text>
+</svg>
