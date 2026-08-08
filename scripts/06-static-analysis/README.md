@@ -10,7 +10,6 @@
 | [`scan_banned_functions.py`](scan_banned_functions.py) | 금지 함수 검사 → SonarQube JSON 리포트 | python3 |
 | [`convert_cppcheck_to_sonar.py`](convert_cppcheck_to_sonar.py) | cppcheck XML → SonarQube JSON 변환 | python3 |
 | [`scan_at_revision.sh`](scan_at_revision.sh) | 특정 날짜 시점으로 되돌려 스캔 후 원복 | bash |
-| [`safe_string.cocci`](safe_string.cocci) | 위험 함수를 경계검사 래퍼로 일괄 치환 | Coccinelle (SmPL) |
 | [`replay_build_log.py`](replay_build_log.py) | 빌드 로그를 재생해 SAST 분석기로 크로스컴파일 후킹 우회 | python3 |
 
 ## 파이프라인
@@ -282,63 +281,6 @@ sourceanalyzer -b firmware-scan-01 -scan -f results.fpr   # 재생 완료 후 �
 
 ---
 
-# safe_string.cocci
-
-레거시 C 코드베이스 전체의 위험한 표준 함수 호출을
-경계 검사가 들어간 래퍼로 **일괄 치환**하는 Coccinelle 시맨틱 패치입니다.
-
-```bash
-# 미리보기 (원본 수정 없음)
-spatch --sp-file safe_string.cocci --dir ./src > safe_string.patch
-
-# 실제 적용
-spatch --sp-file safe_string.cocci --dir ./src --in-place
-```
-
-## 왜 sed 가 아니라 Coccinelle 인가
-
-텍스트 치환으로는 다음을 구분할 수 없습니다.
-
-- 주석이나 문자열 리터럴 안의 `"strcpy"`
-- `my_strcpy_wrapper()` 같은 부분 일치
-- 매크로 정의부와 실제 호출부
-- 인자 안에 괄호나 콤마가 중첩된 경우
-
-Coccinelle 은 **C 파서 위에서 동작**하므로 "함수 호출" 이라는 구문 구조를 인식합니다.
-그리고 결정적으로, 치환 결과에 **원래 인자에서 파생된 표현식**을 넣을 수 있습니다.
-
-## 치환 설계
-
-```c
-strcpy(dst, src)
-  → safe_strcpy(NULL, NULL, sizeof(dst), strlen(src), dst, src)
-                             ~~~~~~~~~~~~~~~~~~~~~~~~
-                             호출 지점에서 자동 생성되는 경계 정보
-```
-
-래퍼는 목적지 버퍼 크기와 소스 길이를 받아 런타임에 검증합니다.
-그 크기 정보를 `sizeof(DST)` / `strlen(SRC)` 로 **자동 생성하는 것이 이 패치의 핵심**입니다.
-사람이 수천 곳을 손으로 고치면 반드시 실수가 납니다.
-
-앞의 `NULL` 두 개는 래퍼가 받는 (파일명, 함수명) 슬롯으로,
-`__FILE__`, `__func__` 로 채우면 위반 발생 시 위치 추적이 가능합니다.
-
-**커버 범위:** `snprintf` `sprintf` `strcpy` `strncpy` `strlcpy`
-`strcat` `strncat` `memcpy` `memcmp` `malloc` `strcmp`
-
-## 주의 — `sizeof(DST)` 의 함정
-
-`DST` 가 **배열**이면 `sizeof` 는 버퍼 크기를 주지만,
-**포인터**면 포인터 크기(4/8 바이트)를 줍니다.
-
-따라서 이 패치는 "배열 버퍼로 선언된 목적지" 에 대해서만 안전하며,
-적용 후 포인터 인자 호출부는 별도로 검토해야 합니다.
-
-> **자동화가 사람의 판단을 완전히 대체하지는 않습니다.**
-> 다만 검토 대상을 수천 곳에서 수십 곳으로 줄여 줍니다.
-
----
-
 ## 의존성
 
 | 도구 | 용도 |
@@ -347,12 +289,11 @@ strcpy(dst, src)
 | `cppcheck` | 정적분석 |
 | `sonar-scanner` | SonarQube 업로드 |
 | `hg` (Mercurial) | 리비전 체크아웃 |
-| `spatch` (Coccinelle) | 시맨틱 패치 적용 |
 | `flawfinder` | 선택 — `--with-flawfinder` 사용 시 |
 | SAST 소스 분석기 (`sourceanalyzer` 등) | `replay_build_log.py` 사용 시 |
 
 ```bash
-sudo apt install cppcheck coccinelle mercurial
+sudo apt install cppcheck mercurial
 pip install flawfinder
 ```
 

@@ -21,7 +21,7 @@
 | 동시 제어 장비 수 | 46대 |
 | 전수 점검 소요 시간 | 11초 (순차 실행 대비 약 40배) |
 | 커널 리비전 A/B 그룹 | 5개 (그룹당 9~10대) |
-| 공개 스크립트 | 17개 |
+| 공개 스크립트 | 16개 |
 
 ---
 
@@ -60,7 +60,6 @@ scripts/
     ├── scan_banned_functions.py     금지 함수 검사 → SonarQube 리포트
     ├── convert_cppcheck_to_sonar.py cppcheck XML → SonarQube JSON 변환
     ├── scan_at_revision.sh          특정 날짜 시점으로 되돌려 스캔 후 원복
-    ├── safe_string.cocci            위험 함수 → 경계검사 래퍼 일괄 치환
     └── replay_build_log.py          빌드 로그 재생으로 SAST 크로스컴파일 후킹 우회
 
 samples/     실제 실행 출력 예시
@@ -143,16 +142,6 @@ hg log -r "max(ancestors(tip) and date('< $NEXT_DAY'))" --template "{rev}\n"
 작업 트리를 과거로 되돌리므로, `trap ... EXIT INT TERM` 으로
 **정상 종료 · 실패 · Ctrl-C 어느 경로로 나가든** tip 복구를 보장합니다.
 
-함께 레거시 코드베이스의 위험 함수를 Coccinelle 시맨틱 패치로 일괄 치환했습니다.
-텍스트 치환과 달리 C 파서 위에서 동작하므로, 치환 결과에
-**원래 인자에서 파생된 경계 정보를 자동 생성**해 넣을 수 있습니다.
-
-```c
-strcpy(dst, src)
-  → safe_strcpy(NULL, NULL, sizeof(dst), strlen(src), dst, src)
-                             ~~~~~~~~~~~~~~~~~~~~~~~~ 자동 생성
-```
-
 ---
 
 ## 실행
@@ -187,20 +176,13 @@ cd scripts/02-stress-test
 | `03-performance/measure_extract_overhead.py` | `python3` (표준 라이브러리만) |
 | `03-performance/measure_latency_ocr.py` | `python3`, `opencv-python`, `pytesseract`, `pandas`, `tesseract-ocr` |
 | `05-test-harness/*` | `bash`, `coreutils`(shuf -z), `tar`, `zip` |
-| `06-static-analysis/*` | `python3`, `cppcheck`, `sonar-scanner`, `hg`, `spatch`(Coccinelle) |
+| `06-static-analysis/*` | `python3`, `cppcheck`, `sonar-scanner`, `hg`, SAST 소스 분석기(`replay_build_log.py` 사용 시) |
 
 ---
 
-## 익명화 안내
+## 참고
 
-실제 업무에서 작성한 스크립트를 공개용으로 다듬은 것입니다.
-
-- SoC 명칭 · 제품명 · 회사명 제거
-- 사내 네트워크 대역 → `192.168.10.x` / `192.168.20.x`
-- 하드코딩된 자격증명 → 환경변수 주입
-- 장비 내부 경로 → 일반화 (`/opt/app/...`)
-
-동작 로직과 설계 의도는 원본 그대로입니다.
+공개를 위해 장비 주소·경로·자격증명 등 식별 정보는 일반화했으며, 동작 로직과 설계 의도는 그대로 유지했습니다.
 
 ---
 

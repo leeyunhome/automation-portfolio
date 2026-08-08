@@ -264,7 +264,6 @@
       <span class="tag">busybox</span>
       <span class="tag">opencv + tesseract</span>
       <span class="tag">cppcheck / sonarqube</span>
-      <span class="tag">coccinelle</span>
       <span class="tag">CI-ready</span>
     </div>
 
@@ -272,7 +271,7 @@
       <div class="stat"><span class="n">46</span><span class="l">동시 제어 장비 수</span></div>
       <div class="stat"><span class="n">11초</span><span class="l">전수 점검 소요 (순차 대비 ~40×)</span></div>
       <div class="stat"><span class="n">5</span><span class="l">커널 리비전 A/B 그룹</span></div>
-      <div class="stat"><span class="n">17</span><span class="l">공개 스크립트</span></div>
+      <div class="stat"><span class="n">16</span><span class="l">공개 스크립트</span></div>
     </div>
   </div>
 </header>
@@ -324,12 +323,10 @@
       </p>
     </div>
 
-    <h3>익명화 안내</h3>
+    <h3>참고</h3>
     <p class="small muted">
-      실제 업무에서 작성한 스크립트를 공개용으로 다듬은 것입니다.
-      SoC 명칭 · 제품명 · 사내 네트워크 대역 · 자격증명은 모두 제거하거나 일반화했으며,
-      비밀번호와 호스트는 환경변수로 주입하도록 변경했습니다.
-      동작 로직과 설계 의도는 원본 그대로입니다.
+      공개를 위해 장비 주소·경로·자격증명 등 식별 정보는 일반화했으며,
+      동작 로직과 설계 의도는 그대로 유지했습니다.
     </p>
   </div>
 </section>
@@ -1035,44 +1032,6 @@ cwd = cwd_stack[-1] if cwd_stack else os.getcwd()
       활용해 우회 경로를 스스로 설계한 사례입니다.
     </p>
 
-    <h3>7-4. Coccinelle 시맨틱 패치</h3>
-    <p>
-      레거시 코드베이스 전체의 위험 함수를 경계검사 래퍼로 일괄 치환합니다.
-      텍스트 치환(sed/정규식)으로는 주석 안의 문자열, 부분 일치, 매크로 정의부,
-      중첩 괄호를 구분할 수 없습니다.
-    </p>
-    <p>
-      Coccinelle 은 <strong>C 파서 위에서 동작</strong>하므로 "함수 호출"이라는 구문 구조를 인식합니다.
-      그리고 결정적으로, 치환 결과에 <strong>원래 인자에서 파생된 표현식</strong>을 넣을 수 있습니다.
-    </p>
-
-<pre><code>@@
-expression DST, SRC;
-@@
-
-- strcpy(DST, SRC)
-+ safe_strcpy(NULL, NULL, sizeof(DST), strlen(SRC), DST, SRC)
-//                        ~~~~~~~~~~~~~~~~~~~~~~~~
-//                        호출 지점에서 자동 생성되는 경계 정보</code></pre>
-
-    <p>
-      래퍼는 목적지 버퍼 크기와 소스 길이를 받아 런타임에 검증합니다.
-      그 크기 정보를 자동 생성하는 것이 이 패치의 핵심입니다 —
-      사람이 수천 곳을 손으로 고치면 반드시 실수가 납니다.
-    </p>
-
-    <div class="callout problem">
-      <div class="t">한계 — sizeof(DST) 의 함정</div>
-      <p>
-        <code>DST</code> 가 <strong>배열</strong>이면 <code>sizeof</code> 는 버퍼 크기를 주지만,
-        <strong>포인터</strong>면 포인터 크기(4/8 바이트)를 줍니다.
-        따라서 이 패치는 배열 버퍼로 선언된 목적지에 대해서만 안전하며,
-        적용 후 포인터 인자 호출부는 별도 검토가 필요합니다.
-        <strong>자동화가 사람의 판단을 대체하지는 않지만</strong>,
-        검토 대상을 수천 곳에서 수십 곳으로 줄여 줍니다.
-      </p>
-    </div>
-
     <div class="card">
       <h3>스크립트 목록</h3>
       <div class="tablewrap">
@@ -1093,11 +1052,6 @@ expression DST, SRC;
             <td><code><a href="scripts/06-static-analysis/scan_at_revision.sh">scan_at_revision.sh</a></code></td>
             <td>날짜 시점 회귀 스캔</td>
             <td>hg revset 리비전 탐색, trap 기반 복구 보장</td>
-          </tr>
-          <tr>
-            <td><code><a href="scripts/06-static-analysis/safe_string.cocci">safe_string.cocci</a></code></td>
-            <td>위험 함수 일괄 치환</td>
-            <td>C 파서 기반 시맨틱 패치, 경계 정보 자동 생성</td>
           </tr>
           <tr>
             <td><code><a href="scripts/06-static-analysis/replay_build_log.py">replay_build_log.py</a></code></td>
@@ -1162,9 +1116,8 @@ expression DST, SRC;
 <footer>
   <div class="wrap">
     <p>
-      실제 업무에서 작성한 자동화 스크립트를 공개용으로 익명화하여 재구성한 포트폴리오입니다.
-      SoC 명칭 · 제품명 · 사내 네트워크 대역 · 자격증명은 모두 제거하거나 일반화했으며,
-      동작 로직과 설계 의도는 원본과 동일합니다.
+      임베디드 리눅스 테스트 자동화 스크립트 포트폴리오입니다.
+      공개를 위해 식별 정보는 일반화했으며, 동작 로직과 설계 의도는 그대로 유지했습니다.
     </p>
     <p>
       <a href="https://github.com/leeyunhome/automation-portfolio">GitHub 저장소</a>
