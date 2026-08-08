@@ -21,7 +21,7 @@
 | 동시 제어 장비 수 | 46대 |
 | 전수 점검 소요 시간 | 11초 (순차 실행 대비 약 40배) |
 | 커널 리비전 A/B 그룹 | 5개 (그룹당 9~10대) |
-| 공개 스크립트 | 15개 |
+| 공개 스크립트 | 17개 |
 
 ---
 
@@ -49,6 +49,7 @@ scripts/
 ├── 04-device-ops/
 │   ├── README.md                    ← busybox 환경 차이 대응 사례
 │   ├── collect_system_info.py       원격 시스템 정보 일괄 수집
+│   ├── check_process_farm.py        SSH 병렬 접속 프로세스 상태 전수 점검
 │   └── stop_services.sh             애플리케이션 데몬 안전 종료
 ├── 05-test-harness/
 │   ├── README.md                    ← 엣지 케이스 설계, CI 연동
@@ -59,7 +60,8 @@ scripts/
     ├── scan_banned_functions.py     금지 함수 검사 → SonarQube 리포트
     ├── convert_cppcheck_to_sonar.py cppcheck XML → SonarQube JSON 변환
     ├── scan_at_revision.sh          특정 날짜 시점으로 되돌려 스캔 후 원복
-    └── safe_string.cocci            위험 함수 → 경계검사 래퍼 일괄 치환
+    ├── safe_string.cocci            위험 함수 → 경계검사 래퍼 일괄 치환
+    └── replay_build_log.py          빌드 로그 재생으로 SAST 크로스컴파일 후킹 우회
 
 samples/     실제 실행 출력 예시
 assets/img/  구조도 · 다이어그램 (SVG)

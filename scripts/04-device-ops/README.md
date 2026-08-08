@@ -7,6 +7,7 @@
 | 파일 | 실행 위치 | 역할 | 언어 |
 |---|---|---|---|
 | [`collect_system_info.py`](collect_system_info.py) | 제어 호스트 | 원격 시스템 정보 일괄 수집 · 리포트 저장 | python3 |
+| [`check_process_farm.py`](check_process_farm.py) | 제어 호스트 | 다수 장비에 SSH 병렬 접속해 프로세스 상태 전수 점검 | python3 + paramiko |
 | [`stop_services.sh`](stop_services.sh) | **장비 위** | 애플리케이션 데몬 안전 종료 | POSIX sh |
 
 ---
@@ -53,6 +54,76 @@ f"sysinfo_{HOST.replace('.', '_')}_{timestamp_str}.txt"
 
 busybox 빌드 구성에 따라 어떤 명령이 포함되어 있는지 다릅니다.
 `A || B` 형태로 구성해 한쪽이 없어도 수집이 이어집니다.
+
+---
+
+# check_process_farm.py
+
+## 용도
+
+"핵심 데몬이 죽어 있는 장비가 몇 대나 있는가" 를 다수 장비에서 한 번에 확인합니다.
+[01-device-farm](../01-device-farm) 의 telnet 기반 장비군과 달리
+**SSH 가 열려 있는 장비군**을 대상으로, `paramiko` 로 병렬 접속합니다.
+
+`stop_services.sh` 가 데몬을 **종료**하는 스크립트라면, 이 스크립트는
+그 반대편 — 데몬이 **살아 있는지 확인**하는 점검 도구입니다.
+종료 → 이 스크립트로 전수 확인 → 필요시 재기동, 순서로 짝을 지어 씁니다.
+
+```bash
+./check_process_farm.py
+Enter the IP range (e.g., 192.168.1.0/24): 192.168.10.0/24
+Enter SSH username: root
+Enter SSH password:            # 입력이 화면에 표시되지 않음 (getpass)
+```
+
+## grep 자기 매칭 회피 — 다른 트릭
+
+`stop_services.sh` 에서는 "전체 경로 + `grep -v grep`" 으로 이 문제를 풀었습니다.
+여기서는 다른 방식을 씁니다.
+
+```python
+command = f"ps -ef | grep '[{PROCESS_NAME[0]}]{PROCESS_NAME[1:]}'"
+# 예: grep '[m]edia-encoder'
+```
+
+첫 글자를 문자 클래스 `[m]` 으로 감싸면, 이 패턴은 **정규식으로 해석**되어
+grep 자신의 커맨드라인에 있는 **리터럴 문자열** `"media-encoder"` 와는
+매치되지 않습니다. 반면 실제 프로세스명과는 정상적으로 매치됩니다.
+
+두 트릭 모두 "grep 이 자기 자신을 찾는" 같은 문제를 풀지만
+환경에 따라 어느 쪽이 더 간결한지가 다릅니다 — 전체 경로를 알고 있으면
+전자가 명확하고, 프로세스명만 알면 후자가 간결합니다.
+
+## 상태를 세 가지로 구분한다
+
+```python
+return (hostname, "FOUND", process_line)
+return (hostname, "NOT_FOUND", f"...")
+return (hostname, "FAILED", f"Connection or command failed: {e}")
+```
+
+`FAILED`(점검하지 못함)를 `NOT_FOUND`(정상 확인됨, 프로세스 없음)와
+**절대 같은 상태로 묻지 않습니다.** 접속 실패로 놓친 장비가
+조용히 "문제 없음"으로 집계되면, 정작 확인이 필요한 장비를 빼놓고
+"전부 정상"이라고 보고하게 됩니다.
+
+## 세 가지 IP 입력 형식
+
+```python
+if "/" in ip_range_str:      # CIDR: 192.168.1.0/24
+    ...
+elif "-" in ip_range_str:    # 범위: 192.168.1.10-192.168.1.50
+    ...
+else:                        # 단일: 192.168.1.10
+    ...
+```
+
+현장에서 장비 목록을 받는 형태가 매번 다르기 때문에 세 형식을 모두 받아들입니다.
+
+## 자격증명을 코드에 두지 않음
+
+IP 대역·계정·비밀번호를 모두 실행 시점에 대화형으로 입력받습니다.
+`getpass.getpass()` 로 비밀번호는 화면에 echo 되지 않습니다.
 
 ---
 
@@ -130,6 +201,7 @@ bash 확장 문법(`[[ ]]`, 배열, `local`)을 쓰지 않았습니다.
 | 스크립트 | 필요 도구 |
 |---|---|
 | `collect_system_info.py` | `python3` (표준 라이브러리만) |
+| `check_process_farm.py` | `python3`, `paramiko` (`pip install paramiko`) |
 | `stop_services.sh` | POSIX `sh`, `ps`, `grep`, `awk` (busybox 로 충분) |
 
 > **참고:** `telnetlib` 는 Python 3.13 에서 제거되었습니다.

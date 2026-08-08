@@ -11,6 +11,7 @@
 | [`convert_cppcheck_to_sonar.py`](convert_cppcheck_to_sonar.py) | cppcheck XML → SonarQube JSON 변환 | python3 |
 | [`scan_at_revision.sh`](scan_at_revision.sh) | 특정 날짜 시점으로 되돌려 스캔 후 원복 | bash |
 | [`safe_string.cocci`](safe_string.cocci) | 위험 함수를 경계검사 래퍼로 일괄 치환 | Coccinelle (SmPL) |
+| [`replay_build_log.py`](replay_build_log.py) | 빌드 로그를 재생해 SAST 분석기로 크로스컴파일 후킹 우회 | python3 |
 
 ## 파이프라인
 
@@ -219,6 +220,68 @@ trap restore_tip EXIT INT TERM
 
 ---
 
+# replay_build_log.py
+
+## 왜 필요한가
+
+상용 SAST 도구는 보통 **"빌드를 후킹"** 하는 방식으로 동작합니다.
+`sourceanalyzer -b <id> make` 처럼 make 앞에 붙어서, make 가 실제로 실행하는
+컴파일러 호출을 가로채 분석에 필요한 정보를 수집합니다.
+
+그런데 이 방식은 크로스컴파일 환경에서 자주 실패합니다.
+
+- 빌드 시스템이 커스텀 래퍼 스크립트로 컴파일러를 감싸고 있거나
+- 여러 단계의 서브 make 가 겹쳐 후킹이 일부만 걸리거나
+- 툴체인 특성상 후킹 프로세스 자체가 크래시하는 경우가 있습니다
+
+원인을 하나씩 디버깅하는 대신, **이미 성공적으로 완료된 빌드의 로그**를
+파싱해서 "그때 실행됐던 컴파일 명령을 그대로 다시 sourceanalyzer 로 실행"
+하는 방식으로 우회했습니다. 빌드는 정상적으로 한 번 끝났으니 로그에는
+실제로 사용된 정확한 플래그와 include 경로가 전부 남아 있습니다.
+
+## 동작 원리 — 디렉터리 스택 복원
+
+GNU make 는 서브 make 호출 시 자동으로 다음과 같은 로그를 남깁니다.
+
+```
+make[2]: Entering directory '/build/src/drivers'
+...
+riscv64-unknown-linux-gnu-gcc -Wall -I../include -c foo.c -o foo.o
+...
+make[2]: Leaving directory '/build/src/drivers'
+```
+
+`-I../include` 같은 **상대 경로**는 컴파일이 실행된 디렉터리를 알아야
+올바르게 해석됩니다. 이 스크립트는 `Entering`/`Leaving` 두 마커를
+스택으로 추적해 각 컴파일 명령이 어느 디렉터리에서 실행됐는지 복원합니다.
+
+```python
+if enter_match:
+    cwd_stack.append(directory)
+if leave_match:
+    cwd_stack.pop()
+
+cwd = cwd_stack[-1] if cwd_stack else os.getcwd()
+# 이 cwd 에서 sourceanalyzer 를 실행해야 상대 include 경로가 풀린다
+```
+
+이 복원이 없으면 분석기가 헤더를 못 찾아 분석 자체가 반쪽짜리가 됩니다.
+
+## 한계
+
+- make 가 디렉터리를 출력하지 않는 빌드 시스템에는 이 방식이 안 통합니다.
+  그 경우 빌드 스크립트에 `echo "===CWD:$(pwd)==="` 같은 커스텀 마커를
+  직접 심어 같은 원리로 추적하는 변형이 필요합니다.
+- 컴파일이 실패했던 명령은 로그에 없으므로 재현되지 않습니다
+  (분석 대상은 "성공한 빌드"로 한정됩니다).
+
+```bash
+./replay_build_log.py build.log firmware-scan-01
+sourceanalyzer -b firmware-scan-01 -scan -f results.fpr   # 재생 완료 후 리포트 생성
+```
+
+---
+
 # safe_string.cocci
 
 레거시 C 코드베이스 전체의 위험한 표준 함수 호출을
@@ -286,6 +349,7 @@ strcpy(dst, src)
 | `hg` (Mercurial) | 리비전 체크아웃 |
 | `spatch` (Coccinelle) | 시맨틱 패치 적용 |
 | `flawfinder` | 선택 — `--with-flawfinder` 사용 시 |
+| SAST 소스 분석기 (`sourceanalyzer` 등) | `replay_build_log.py` 사용 시 |
 
 ```bash
 sudo apt install cppcheck coccinelle mercurial

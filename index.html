@@ -272,7 +272,7 @@
       <div class="stat"><span class="n">46</span><span class="l">동시 제어 장비 수</span></div>
       <div class="stat"><span class="n">11초</span><span class="l">전수 점검 소요 (순차 대비 ~40×)</span></div>
       <div class="stat"><span class="n">5</span><span class="l">커널 리비전 A/B 그룹</span></div>
-      <div class="stat"><span class="n">15</span><span class="l">공개 스크립트</span></div>
+      <div class="stat"><span class="n">17</span><span class="l">공개 스크립트</span></div>
     </div>
   </div>
 </header>
@@ -767,6 +767,37 @@ ip : 192.168.10.17
     </div>
 
     <div class="card">
+      <h3>check_process_farm.py</h3>
+      <div class="path"><a href="scripts/04-device-ops/check_process_farm.py">scripts/04-device-ops/check_process_farm.py</a></div>
+      <p>
+        "핵심 데몬이 죽어 있는 장비가 몇 대나 있는가"를 다수 장비에서 한 번에 확인합니다.
+        <a href="#farm">01-device-farm</a> 의 telnet 기반 장비군과 달리
+        <strong>SSH 가 열려 있는 장비군</strong>을 대상으로 <code>paramiko</code> 로 병렬 접속합니다.
+        아래 <code>stop_services.sh</code> 가 데몬을 <strong>종료</strong>한다면,
+        이 스크립트는 그 반대편 — 데몬이 <strong>살아 있는지 확인</strong>하는 점검 도구입니다.
+      </p>
+
+      <h4>grep 자기 매칭 회피 — 또 다른 방식</h4>
+      <p class="small">
+        아래 <code>stop_services.sh</code> 는 "전체 경로 + <code>grep -v grep</code>" 으로 이 문제를 풀었습니다.
+        여기서는 첫 글자를 문자 클래스로 감싸는 방식을 씁니다.
+      </p>
+<pre><code>command = f"ps -ef | grep '[{PROCESS_NAME[0]}]{PROCESS_NAME[1:]}'"
+# 예: grep '[m]edia-encoder'
+# [m] 은 정규식 문자 클래스로 해석되어, grep 자신의 커맨드라인에 있는
+# 리터럴 문자열 "media-encoder" 와는 매치되지 않는다.</code></pre>
+
+      <h4>상태를 세 가지로 구분한다</h4>
+      <p class="small">
+        <code>FOUND</code> / <code>NOT_FOUND</code> / <code>FAILED</code> 를 명확히 나눕니다.
+        <strong>접속 실패(FAILED)를 정상(NOT_FOUND)과 절대 같은 상태로 묻지 않습니다</strong> —
+        그렇지 않으면 확인이 필요한 장비를 놓치고도 "전부 정상"으로 보고하게 됩니다.
+        IP 입력은 CIDR·범위·단일 세 형식을 모두 받고, 자격증명은
+        <code>getpass.getpass()</code> 로 화면에 노출하지 않고 실행 시점에 입력받습니다.
+      </p>
+    </div>
+
+    <div class="card">
       <h3>stop_services.sh</h3>
       <div class="path"><a href="scripts/04-device-ops/stop_services.sh">scripts/04-device-ops/stop_services.sh</a></div>
       <p>
@@ -962,7 +993,49 @@ hg update tip                     원복 (trap 으로 보장)</code></pre>
       </p>
     </div>
 
-    <h3>7-3. Coccinelle 시맨틱 패치</h3>
+    <h3>7-3. SAST 크로스컴파일 후킹 우회 — 빌드 로그 재생</h3>
+    <p>
+      상용 SAST 도구는 보통 "빌드를 후킹"합니다 —
+      <code>sourceanalyzer -b &lt;id&gt; make</code> 처럼 make 앞에 붙어
+      실제 컴파일러 호출을 가로챕니다. 그런데 이 방식은 크로스컴파일 환경에서
+      자주 실패합니다. 커스텀 컴파일러 래퍼, 중첩된 서브 make, 툴체인 특성으로 인한
+      후킹 프로세스 크래시 — 원인이 다양하고 하나씩 디버깅하기엔 비효율적입니다.
+    </p>
+    <p>
+      원인을 파고드는 대신, <strong>이미 성공적으로 완료된 빌드의 로그를 파싱해
+      그때 실행됐던 컴파일 명령을 그대로 재실행</strong>하는 방식으로 우회했습니다.
+      빌드는 정상적으로 끝났으니, 로그에는 실제로 사용된 정확한 플래그와
+      include 경로가 전부 남아 있습니다.
+    </p>
+
+<pre><code>make[2]: Entering directory '/build/src/drivers'
+...
+riscv64-unknown-linux-gnu-gcc -Wall -I../include -c foo.c -o foo.o
+...
+make[2]: Leaving directory '/build/src/drivers'</code></pre>
+
+    <p>
+      <code>-I../include</code> 같은 상대 경로는 컴파일이 실행된 디렉터리를 알아야
+      올바르게 해석됩니다. <code>Entering</code>/<code>Leaving</code> 두 마커를
+      스택으로 추적해 각 컴파일 명령의 실행 위치를 복원합니다.
+    </p>
+
+<pre><code>if enter_match:
+    cwd_stack.append(directory)
+if leave_match:
+    cwd_stack.pop()
+
+cwd = cwd_stack[-1] if cwd_stack else os.getcwd()
+# 이 cwd 에서 sourceanalyzer 를 실행해야 상대 include 경로가 풀린다</code></pre>
+
+    <p class="small muted">
+      한계도 있습니다 — make 가 디렉터리를 출력하지 않는 빌드 시스템에는 이 방식이
+      안 통합니다(커스텀 마커를 심는 변형이 필요). 실패했던 컴파일 명령은 로그에
+      없으므로 재현되지 않습니다. 표준 도구가 안 맞을 때, 이미 있는 산출물(빌드 로그)을
+      활용해 우회 경로를 스스로 설계한 사례입니다.
+    </p>
+
+    <h3>7-4. Coccinelle 시맨틱 패치</h3>
     <p>
       레거시 코드베이스 전체의 위험 함수를 경계검사 래퍼로 일괄 치환합니다.
       텍스트 치환(sed/정규식)으로는 주석 안의 문자열, 부분 일치, 매크로 정의부,
@@ -1025,6 +1098,11 @@ expression DST, SRC;
             <td><code><a href="scripts/06-static-analysis/safe_string.cocci">safe_string.cocci</a></code></td>
             <td>위험 함수 일괄 치환</td>
             <td>C 파서 기반 시맨틱 패치, 경계 정보 자동 생성</td>
+          </tr>
+          <tr>
+            <td><code><a href="scripts/06-static-analysis/replay_build_log.py">replay_build_log.py</a></code></td>
+            <td>빌드 로그 재생</td>
+            <td>make Entering/Leaving 마커로 디렉터리 스택 복원, SAST 후킹 우회</td>
           </tr>
         </tbody>
       </table>
