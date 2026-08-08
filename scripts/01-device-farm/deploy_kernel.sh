@@ -17,7 +17,7 @@ set -u
 
 PREFIX="${DEVICE_SUBNET:-192.168.10}"
 USER_ID="${DEVICE_USER:-root}"
-USER_PW="${DEVICE_PASS:-root}"
+USER_PW="${DEVICE_PASS:-changeme}"
 
 KERNEL_FILE="${1:-}"
 START_OCTET="${2:-}"

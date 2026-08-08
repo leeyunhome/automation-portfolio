@@ -28,8 +28,10 @@
 # 그 이후 발생한 이벤트만 이상 징후로 승격 출력한다.
 #
 # 사용법
-#   ./analyze_link_events.sh [start_octet] [end_octet]
+#   DEVICE_USER=root DEVICE_PASS=changeme ./analyze_link_events.sh [start_octet] [end_octet]
 #   BOOT_THRESHOLD=90 ./analyze_link_events.sh 11 56
+#
+# DEVICE_USER/DEVICE_PASS 는 내부에서 호출하는 collect_dmesg.exp 로 그대로 전달된다.
 # =============================================================================
 
 set -u

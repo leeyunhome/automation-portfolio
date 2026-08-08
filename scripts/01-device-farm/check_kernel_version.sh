@@ -18,7 +18,7 @@ set -u
 
 PREFIX="${DEVICE_SUBNET:-192.168.10}"
 USER_ID="${DEVICE_USER:-root}"
-USER_PW="${DEVICE_PASS:-root}"
+USER_PW="${DEVICE_PASS:-changeme}"
 
 check_build() {
     local ip=$1

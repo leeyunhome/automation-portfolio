@@ -6,7 +6,7 @@
 # analyze_link_events.sh 가 장비별로 이 스크립트를 호출한다.
 #
 # 사용법
-#   ./collect_dmesg.exp <ip> <logfile>
+#   DEVICE_USER=root DEVICE_PASS=changeme ./collect_dmesg.exp <ip> <logfile>
 #   예) ./collect_dmesg.exp 192.168.10.11 ./dmesg_logs/dmesg_192.168.10.11.log
 #
 # 설계 포인트
@@ -19,8 +19,9 @@
 set ip      [lindex $argv 0]
 set logfile [lindex $argv 1]
 
-set user    "root"
-set passwd  "root"
+# 다른 01-device-farm 스크립트들과 동일하게 환경변수로 자격증명을 주입받는다
+if {[info exists env(DEVICE_USER)]} { set user $env(DEVICE_USER) } else { set user "root" }
+if {[info exists env(DEVICE_PASS)]} { set passwd $env(DEVICE_PASS) } else { set passwd "changeme" }
 
 # 로그 파일이 지정된 경우에만 세션 로깅 활성화
 if {$logfile ne ""} {

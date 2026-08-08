@@ -24,7 +24,7 @@ set -u
 
 PREFIX="${DEVICE_SUBNET:-192.168.10}"
 USER_ID="${DEVICE_USER:-root}"
-USER_PW="${DEVICE_PASS:-root}"
+USER_PW="${DEVICE_PASS:-changeme}"
 
 RESULT_FILE="$(mktemp /tmp/uptime_results.XXXXXX)"
 trap 'rm -f "$RESULT_FILE"' EXIT
