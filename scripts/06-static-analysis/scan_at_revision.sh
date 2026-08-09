@@ -12,7 +12,7 @@
 # 분석하는 것은 반복 작업이다.
 #
 # 이 스크립트는 날짜를 인자로 받아
-#   그 날짜 이전의 최신 리비전 탐색 -> 체크아웃 -> 전체 SCA -> 원복
+#   그 날짜 이전의 최신 커밋 탐색 -> 체크아웃 -> 전체 SCA -> 원복
 # 을 한 번에 수행한다. 날짜를 바꿔 가며 여러 번 돌리면
 # 이슈 건수의 변화 지점(= 유입 시점)이 드러난다.
 #
@@ -21,8 +21,8 @@
 # -----------------------------------------------------------------------------
 # 안전장치
 # -----------------------------------------------------------------------------
-# 작업 트리를 과거로 되돌리므로, 어떤 경로로 끝나든 반드시 tip 으로 복구해야 한다.
-#   - 시작 시 현재 리비전을 기록
+# 작업 트리를 과거로 되돌리므로, 어떤 경로로 끝나든 반드시 원래 브랜치로 복구해야 한다.
+#   - 시작 시 현재 브랜치/커밋을 기록
 #   - trap EXIT 으로 정상 종료 / 실패 / 중단(Ctrl-C) 모두에서 복구 실행
 #
 # 원본에서는 각 단계마다 수동으로 복구 코드를 넣었는데,
@@ -71,16 +71,15 @@ log() {
 
 # ── 복구 보장 ─────────────────────────────────────────────
 # 작업 트리를 과거로 되돌린 상태로 스크립트가 끝나면 안 된다.
-# 정상 종료 / 실패 / Ctrl-C 어느 경로로 나가든 tip 으로 복구한다.
-restore_tip() {
+# 정상 종료 / 실패 / Ctrl-C 어느 경로로 나가든 원래 브랜치로 복구한다.
+restore_branch() {
     local rc=$?
-    log "[복구] 최신 리비전으로 복구 중..."
+    log "[복구] 원래 브랜치로 복구 중..."
     cd "$REPO_DIR"
-    hg update tip >> "$LOG_FILE" 2>&1 || true
-    log "복구 완료 (revision: $(hg id -i 2>/dev/null || echo unknown))"
+    git checkout "$CURRENT_REF" >> "$LOG_FILE" 2>&1 || true
+    log "복구 완료 (현재: $(git rev-parse --short HEAD 2>/dev/null || echo unknown))"
     exit $rc
 }
-trap restore_tip EXIT INT TERM
 
 log "======================================================"
 log " 날짜 지정 정적분석"
@@ -89,28 +88,31 @@ log " Project Key: $PROJECT_KEY"
 log "======================================================"
 
 cd "$REPO_DIR"
-CURRENT_REV=$(hg id -i)
-log "현재 revision: $CURRENT_REV"
+# 브랜치명이 있으면 브랜치로, 없으면(detached HEAD) 커밋 해시로 기록해야
+# 복구 시점에 정확히 원래 위치로 돌아갈 수 있다.
+CURRENT_REF=$(git symbolic-ref --short -q HEAD || git rev-parse HEAD)
+log "현재 위치: $CURRENT_REF"
 
-# ── Step 0. 해당 날짜 이전 최신 리비전으로 체크아웃 ────────
+trap restore_branch EXIT INT TERM
+
+# ── Step 0. 해당 날짜 이전 최신 커밋으로 체크아웃 ──────────
 log "[Step 0] $TARGET_DATE 시점으로 체크아웃"
 
-# revset 해설:
-#   ancestors(tip)  현재 브랜치의 조상들로 한정 (다른 헤드의 커밋 배제)
-#   date('< X')     X 이전에 커밋된 것
-#   max(...)        그중 가장 최신
+# git log 해설:
+#   --before="X"    X 이전에 커밋된 것
+#   -1               그중 가장 최신 (log 는 최신순으로 나열되므로 첫 줄)
+#   HEAD             현재 브랜치의 조상들로 한정 (다른 브랜치의 커밋 배제)
 # -> "그 날짜에 실제로 빌드되던 코드" 를 정확히 집어낸다
 NEXT_DAY=$(date -d "$TARGET_DATE + 1 day" +%Y-%m-%d)
-TARGET_REV=$(hg log -r "max(ancestors(tip) and date('< $NEXT_DAY'))" \
-                --template "{rev}\n" 2>/dev/null || true)
+TARGET_REV=$(git log -1 --before="$NEXT_DAY" --format="%H" HEAD 2>/dev/null || true)
 
 if [ -z "$TARGET_REV" ]; then
-    log "ERROR: $TARGET_DATE 이전 revision 을 찾을 수 없습니다."
+    log "ERROR: $TARGET_DATE 이전 커밋을 찾을 수 없습니다."
     exit 1
 fi
 
-log "체크아웃 revision: $TARGET_REV"
-hg update -r "$TARGET_REV" >> "$LOG_FILE" 2>&1
+log "체크아웃 커밋: $TARGET_REV"
+git checkout "$TARGET_REV" >> "$LOG_FILE" 2>&1
 log "체크아웃 완료"
 
 # ── Step 1. cppcheck ──────────────────────────────────────
@@ -156,9 +158,9 @@ sonar-scanner \
 
 log "======================================================"
 log " 완료"
-log " 기준 날짜 : $TARGET_DATE (revision: $TARGET_REV)"
+log " 기준 날짜 : $TARGET_DATE (커밋: $TARGET_REV)"
 log " 대시보드  : ${SONAR_URL}/dashboard?id=${PROJECT_KEY}"
 log " 로그      : $LOG_FILE"
 log "======================================================"
 
-# trap 이 여기서 tip 복구를 수행한다
+# trap 이 여기서 원래 브랜치로 복구를 수행한다

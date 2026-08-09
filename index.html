@@ -909,7 +909,7 @@ tar --null -T -   │  NULL 구분 파일 목록을 stdin 에서 읽음</code></
       매일 정해진 시각에 무인 실행되는 파이프라인으로 구성했습니다.
     </p>
 
-<pre><code>hg update -r &lt;과거 리비전&gt;        scan_at_revision.sh
+<pre><code>git checkout &lt;과거 커밋&gt;          scan_at_revision.sh
       ↓
 cppcheck --enable=all --xml       정적분석
       ↓
@@ -919,7 +919,7 @@ scan_banned_functions.py --merge  정책 기반 검사 결과 병합
       ↓
 sonar-scanner                     대시보드 업로드
       ↓
-hg update tip                     원복 (trap 으로 보장)</code></pre>
+git checkout &lt;원래 브랜치&gt;        원복 (trap 으로 보장)</code></pre>
 
     <h3>7-1. 정책 기반 금지 함수 검사</h3>
     <p>
@@ -961,18 +961,18 @@ hg update tip                     원복 (trap 으로 보장)</code></pre>
     <h3>7-2. 취약점 유입 시점 추적</h3>
     <p>
       <strong>"이 취약점이 언제 코드에 들어왔는가"</strong>를 알아야 할 때가 있습니다.
-      현재 시점만 스캔해서는 알 수 없고, 과거 리비전을 하나씩 수동으로 체크아웃해
+      현재 시점만 스캔해서는 알 수 없고, 과거 커밋을 하나씩 수동으로 체크아웃해
       분석하는 것은 반복 작업입니다.
     </p>
 
-<pre><code>hg log -r "max(ancestors(tip) and date('&lt; $NEXT_DAY'))" --template "{rev}\n"
-#          ancestors(tip)  현재 브랜치의 조상으로 한정 — 다른 헤드의 커밋 배제
-#          date('&lt; X')     X 이전에 커밋된 것
-#          max(...)        그중 가장 최신</code></pre>
+<pre><code>git log -1 --before="$NEXT_DAY" --format="%H" HEAD
+#        HEAD             현재 브랜치의 조상으로 한정 — 다른 브랜치의 커밋 배제
+#        --before="X"     X 이전에 커밋된 것
+#        -1               그중 가장 최신</code></pre>
 
     <p>
       단순히 날짜로 필터링하면 다른 브랜치의 커밋이 섞여 재현이 되지 않습니다.
-      <code>ancestors(tip)</code> 로 한정해야 <strong>"그 날짜에 실제로 빌드되던 코드"</strong>를 집어낼 수 있습니다.
+      <code>HEAD</code> 로 한정해야 <strong>"그 날짜에 실제로 빌드되던 코드"</strong>를 집어낼 수 있습니다.
       날짜를 바꿔 가며 여러 번 돌리면 이슈 건수의 변화 지점(= 유입 시점)이 드러납니다.
     </p>
     <p class="small muted">
@@ -983,7 +983,7 @@ hg update tip                     원복 (trap 으로 보장)</code></pre>
       <div class="t">복구 보장 — trap</div>
       <p>
         작업 트리를 과거로 되돌리므로, <em>되돌린 상태로 스크립트가 끝나면 안 됩니다.</em>
-        <code>trap restore_tip EXIT INT TERM</code> 으로
+        <code>trap restore_branch EXIT INT TERM</code> 으로
         정상 종료 · 실패 · Ctrl-C 어느 경로로 나가든 복구가 실행되게 했습니다.
         원본에서는 단계마다 수동으로 복구 코드를 넣었는데,
         경로가 늘어날수록 빠뜨리기 쉬워 trap 방식으로 정리했습니다.
@@ -1051,7 +1051,7 @@ cwd = cwd_stack[-1] if cwd_stack else os.getcwd()
           <tr>
             <td><code><a href="scripts/06-static-analysis/scan_at_revision.sh">scan_at_revision.sh</a></code></td>
             <td>날짜 시점 회귀 스캔</td>
-            <td>hg revset 리비전 탐색, trap 기반 복구 보장</td>
+            <td>git log 기반 커밋 탐색, trap 기반 복구 보장</td>
           </tr>
           <tr>
             <td><code><a href="scripts/06-static-analysis/replay_build_log.py">replay_build_log.py</a></code></td>

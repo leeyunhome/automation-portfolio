@@ -212,7 +212,7 @@ def scan_directory(directory, base_dir=None):
     for root, dirs, files in os.walk(directory):
         # in-place 수정으로 os.walk 의 순회 대상 자체를 줄인다
         dirs[:] = [d for d in dirs
-                   if not d.startswith(".") and d not in ("obj", "build", ".hg", ".git")]
+                   if not d.startswith(".") and d not in ("obj", "build")]
 
         for fname in files:
             if os.path.splitext(fname)[1].lower() in SRC_EXTS:

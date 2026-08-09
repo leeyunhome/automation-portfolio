@@ -129,18 +129,18 @@ timestamp=$(echo "$line" | grep -oP '\[\s*\K[0-9]+(?=\.)')
 ### 4. 취약점 유입 시점 추적
 
 "이 취약점이 언제 들어왔는가" 를 알기 위해, 날짜를 인자로 받아
-`그 날짜 이전의 최신 리비전 탐색 → 체크아웃 → 전체 정적분석 → 원복` 을 자동화했습니다.
+`그 날짜 이전의 최신 커밋 탐색 → 체크아웃 → 전체 정적분석 → 원복` 을 자동화했습니다.
 
 ```bash
-hg log -r "max(ancestors(tip) and date('< $NEXT_DAY'))" --template "{rev}\n"
-#          ancestors(tip)  현재 브랜치의 조상으로 한정 (다른 헤드 배제)
-#          date('< X')     X 이전에 커밋된 것
-#          max(...)        그중 가장 최신
+git log -1 --before="$NEXT_DAY" --format="%H" HEAD
+#        HEAD             현재 브랜치의 조상으로 한정 (다른 브랜치 배제)
+#        --before="X"     X 이전에 커밋된 것
+#        -1               그중 가장 최신
 ```
 
 날짜를 바꿔 가며 돌리면 이슈 건수의 변화 지점이 드러납니다.
 작업 트리를 과거로 되돌리므로, `trap ... EXIT INT TERM` 으로
-**정상 종료 · 실패 · Ctrl-C 어느 경로로 나가든** tip 복구를 보장합니다.
+**정상 종료 · 실패 · Ctrl-C 어느 경로로 나가든** 원래 브랜치 복구를 보장합니다.
 
 ---
 
@@ -176,7 +176,7 @@ cd scripts/02-stress-test
 | `03-performance/measure_extract_overhead.py` | `python3` (표준 라이브러리만) |
 | `03-performance/measure_latency_ocr.py` | `python3`, `opencv-python`, `pytesseract`, `pandas`, `tesseract-ocr` |
 | `05-test-harness/*` | `bash`, `coreutils`(shuf -z), `tar`, `zip` |
-| `06-static-analysis/*` | `python3`, `cppcheck`, `sonar-scanner`, `hg`, SAST 소스 분석기(`replay_build_log.py` 사용 시) |
+| `06-static-analysis/*` | `python3`, `cppcheck`, `sonar-scanner`, `git`, SAST 소스 분석기(`replay_build_log.py` 사용 시) |
 
 ---
 

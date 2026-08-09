@@ -15,7 +15,7 @@
 ## 파이프라인
 
 ```
-hg update -r <과거 리비전>        scan_at_revision.sh
+git checkout <과거 커밋>          scan_at_revision.sh
       ↓
 cppcheck --enable=all --xml       정적분석
       ↓
@@ -25,7 +25,7 @@ scan_banned_functions.py --merge  정책 기반 검사 결과 병합
       ↓
 sonar-scanner                     대시보드 업로드
       ↓
-hg update tip                     원복 (trap 으로 보장)
+git checkout <원래 브랜치>        원복 (trap 으로 보장)
 ```
 
 ```bash
@@ -168,22 +168,22 @@ cppcheck 는 실행 위치에 따라 절대/상대 경로를 섞어 냅니다.
 분석하는 것은 반복 작업입니다.
 
 날짜를 인자로 받아
-`그 날짜 이전의 최신 리비전 탐색 → 체크아웃 → 전체 SCA → 원복` 을 한 번에 수행합니다.
+`그 날짜 이전의 최신 커밋 탐색 → 체크아웃 → 전체 SCA → 원복` 을 한 번에 수행합니다.
 날짜를 바꿔 가며 여러 번 돌리면 **이슈 건수의 변화 지점(= 유입 시점)** 이 드러납니다.
 
 > 커널 CVE 백포팅에서 "패치 전/후를 같은 기준으로 비교" 하는 것과 같은 구조입니다.
 
-## 리비전 탐색
+## 커밋 탐색
 
 ```bash
-hg log -r "max(ancestors(tip) and date('< $NEXT_DAY'))" --template "{rev}\n"
+git log -1 --before="$NEXT_DAY" --format="%H" HEAD
 ```
 
-| 절 | 의미 |
+| 옵션 | 의미 |
 |---|---|
-| `ancestors(tip)` | 현재 브랜치의 조상으로 한정 — 다른 헤드의 커밋 배제 |
-| `date('< X')` | X 이전에 커밋된 것 |
-| `max(...)` | 그중 가장 최신 |
+| `HEAD` | 현재 브랜치의 조상으로 한정 — 다른 브랜치의 커밋 배제 |
+| `--before="X"` | X 이전에 커밋된 것 |
+| `-1` | 그중 가장 최신 (최신순 정렬의 첫 줄) |
 
 **"그 날짜에 실제로 빌드되던 코드"** 를 정확히 집어냅니다.
 단순히 날짜로 필터링하면 다른 브랜치의 커밋이 섞여 재현이 안 됩니다.
@@ -193,19 +193,21 @@ hg log -r "max(ancestors(tip) and date('< $NEXT_DAY'))" --template "{rev}\n"
 작업 트리를 **과거로 되돌린 상태로 스크립트가 끝나면 안 됩니다.**
 
 ```bash
-restore_tip() {
+restore_branch() {
     local rc=$?
     cd "$REPO_DIR"
-    hg update tip >> "$LOG_FILE" 2>&1 || true
+    git checkout "$CURRENT_REF" >> "$LOG_FILE" 2>&1 || true
     exit $rc
 }
-trap restore_tip EXIT INT TERM
+trap restore_branch EXIT INT TERM
 ```
 
 정상 종료 · 실패 · Ctrl-C 어느 경로로 나가든 복구가 실행됩니다.
+브랜치명이 있으면 브랜치로, 없으면(detached HEAD) 커밋 해시로 기록해 두어
+복구 시점에 정확히 원래 위치로 돌아갈 수 있게 합니다.
 
 > 원본에서는 각 단계마다 수동으로 복구 코드를 넣었는데
-> (`[ $? -ne 0 ] && hg update ... && exit 1`),
+> (`[ $? -ne 0 ] && git checkout ... && exit 1`),
 > 경로가 늘어날수록 빠뜨리기 쉬워 `trap` 방식으로 정리했습니다.
 
 ## cppcheck 억제 룰
@@ -288,12 +290,12 @@ sourceanalyzer -b firmware-scan-01 -scan -f results.fpr   # 재생 완료 후 �
 | `python3` | 스캐너 · 변환기 (표준 라이브러리만) |
 | `cppcheck` | 정적분석 |
 | `sonar-scanner` | SonarQube 업로드 |
-| `hg` (Mercurial) | 리비전 체크아웃 |
+| `git` | 커밋 체크아웃 |
 | `flawfinder` | 선택 — `--with-flawfinder` 사용 시 |
 | SAST 소스 분석기 (`sourceanalyzer` 등) | `replay_build_log.py` 사용 시 |
 
 ```bash
-sudo apt install cppcheck mercurial
+sudo apt install cppcheck git
 pip install flawfinder
 ```
 
