@@ -1,6 +1,10 @@
 # 실행 산출물 — 실제 장비 정보가 담길 수 있으므로 커밋 금지
 dmesg_logs/
 reports/
+docs/
+*.doc
+*.docx
+*.pdf
 screenshots_*/
 *.log
 debug_roi.png
