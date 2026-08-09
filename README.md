@@ -3,7 +3,8 @@
 다수의 임베디드 리눅스 장비를 대상으로 **커널 배포 · 안정성 검증 · 부하 인가 · 커널 로그 이상 탐지 · 성능 정량화**를
 무인으로 수행하기 위해 작성한 Shell / Python 자동화 스크립트 모음입니다.
 
-**[→ GitHub Pages 에서 전체 설명 보기](https://leeyunhome.github.io/automation-portfolio/)**
+**[→ GitHub Pages 에서 전체 설명 보기](https://leeyunhome.github.io/automation-portfolio/)**  
+**[→ LG전자 [MS본부] 임베디드 리눅스 커널/시스템 SW 채용 공고 직무 매핑서](docs/LG_MS_Kernel_Optimization_Experience_Map.md)**
 
 ---
 
